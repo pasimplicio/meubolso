@@ -501,11 +501,36 @@
 
 @media (max-width: 768px) {
   .mobile-nav { display: flex; }
-  .sidebar    { transform: translateX(-100%); }
+
+  /* No mobile a sidebar fica escondida por padrão */
+  .sidebar {
+    transform: translateX(-100%);
+    z-index: 60;
+  }
+  /* Abre quando NÃO tem a classe sidebar-hidden */
+  .sidebar:not(.sidebar-hidden) {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(15,23,42,0.15);
+  }
+
   .main-content {
     margin-left: 0 !important;
     padding-bottom: calc(var(--mobile-nav-height) + 16px) !important;
   }
+
+  /* Backdrop visível só no mobile */
+  .sidebar-backdrop { display: block; }
+}
+
+/* Backdrop para fechar a sidebar tocando fora (mobile) */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.4);
+  backdrop-filter: blur(2px);
+  z-index: 55;
+  animation: fadeIn 0.2s ease;
 }
 
 /* ══════════════════════════════════════

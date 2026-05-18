@@ -37,7 +37,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-  const { theme, sidebarOpen } = useAppStore();
+  const { theme, sidebarOpen, setSidebarOpen } = useAppStore();
   const { isAuthenticated } = useAuthStore();
   const { loadAccounts } = useAccountStore();
   const { loadCategories } = useCategoryStore();
@@ -78,6 +78,10 @@ function AppContent() {
     <div>
       <Header />
       <Sidebar />
+      {/* Fecha a sidebar ao tocar fora no mobile */}
+      {sidebarOpen && (
+        <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />
+      )}
       <main className={`main-content ${!sidebarOpen ? 'sidebar-collapsed' : ''}`}>
         <Routes>
           <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
