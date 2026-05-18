@@ -20,13 +20,16 @@ export default function CategoriesPage() {
   const handleDelete = async (id: string) => {
     const ok = await confirm({
       title: 'Excluir categoria?',
-      message: 'As subcategorias também serão removidas. As transações vinculadas não serão afetadas.',
+      message: 'Subcategorias sem vínculos também serão removidas.',
       confirmLabel: 'Excluir',
       variant: 'danger',
     });
-    if (ok) {
+    if (!ok) return;
+    try {
       await deleteCategory(id);
       toast.success('Categoria excluída');
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 

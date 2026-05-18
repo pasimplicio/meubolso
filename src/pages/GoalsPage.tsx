@@ -23,9 +23,12 @@ export default function GoalsPage() {
       confirmLabel: 'Excluir',
       variant: 'danger',
     });
-    if (ok) {
+    if (!ok) return;
+    try {
       await deleteGoal(id);
       toast.success('Meta excluída');
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 

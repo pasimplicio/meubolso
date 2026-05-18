@@ -3,6 +3,7 @@ import { db } from '../db';
 import { nanoid } from 'nanoid';
 import type { Account } from '../types';
 import { useAuthStore } from './authStore';
+import { useTransactionStore } from './transactionStore';
 
 interface AccountStore {
   accounts: Account[];
@@ -48,6 +49,12 @@ export const useAccountStore = create<AccountStore>()((set, get) => ({
   },
 
   deleteAccount: async (id) => {
+    const { transactions } = useTransactionStore.getState();
+    const linked = transactions.filter(t => t.accountId === id || t.toAccountId === id);
+    if (linked.length > 0) {
+      const plural = linked.length === 1 ? 'transação vinculada' : `${linked.length} transações vinculadas`;
+      throw new Error(`Esta conta possui ${plural}. Remova as transações antes de excluir a conta.`);
+    }
     await db.accounts.delete(id);
     set((state) => ({ accounts: state.accounts.filter((a) => a.id !== id) }));
   },

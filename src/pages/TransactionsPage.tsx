@@ -67,9 +67,12 @@ export default function TransactionsPage() {
       confirmLabel: 'Excluir',
       variant: 'danger',
     });
-    if (ok) {
+    if (!ok) return;
+    try {
       await deleteTransaction(id);
       toast.success('Transação excluída');
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 

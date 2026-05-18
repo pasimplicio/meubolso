@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { db } from '../db';
 import { nanoid } from 'nanoid';
 import type { Category } from '../types';
+import { useTransactionStore } from './transactionStore';
+import { useBudgetStore } from './budgetStore';
 
 interface CategoryStore {
   categories: Category[];
@@ -39,8 +41,30 @@ export const useCategoryStore = create<CategoryStore>()((set, get) => ({
   },
 
   deleteCategory: async (id) => {
+    const { categories } = get();
+    const subcatIds = categories.filter(c => c.parentId === id).map(c => c.id);
+    const allIds = [id, ...subcatIds];
+
+    const { transactions } = useTransactionStore.getState();
+    const linkedTx = transactions.filter(t => allIds.includes(t.categoryId));
+    if (linkedTx.length > 0) {
+      const plural = linkedTx.length === 1 ? 'transação vinculada' : `${linkedTx.length} transações vinculadas`;
+      throw new Error(`Esta categoria possui ${plural}. Remova as transações antes de excluir a categoria.`);
+    }
+
+    const { budgets } = useBudgetStore.getState();
+    const linkedBudgets = budgets.filter(b => allIds.includes(b.categoryId));
+    if (linkedBudgets.length > 0) {
+      const plural = linkedBudgets.length === 1 ? '1 orçamento vinculado' : `${linkedBudgets.length} orçamentos vinculados`;
+      throw new Error(`Esta categoria possui ${plural}. Exclua os orçamentos antes de remover a categoria.`);
+    }
+
+    // Cascade: remove subcategorias sem vínculos
+    if (subcatIds.length > 0) {
+      await db.categories.bulkDelete(subcatIds);
+    }
     await db.categories.delete(id);
-    set((state) => ({ categories: state.categories.filter((c) => c.id !== id) }));
+    set((state) => ({ categories: state.categories.filter(c => !allIds.includes(c.id)) }));
   },
 
   getCategoryById: (id) => get().categories.find((c) => c.id === id),

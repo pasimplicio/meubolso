@@ -18,13 +18,16 @@ export default function AccountsPage() {
   const handleDelete = async (id: string) => {
     const ok = await confirm({
       title: 'Excluir conta?',
-      message: 'Esta ação não pode ser desfeita. Todas as transações vinculadas permanecerão no histórico.',
+      message: 'Esta ação não pode ser desfeita.',
       confirmLabel: 'Excluir',
       variant: 'danger',
     });
-    if (ok) {
+    if (!ok) return;
+    try {
       await deleteAccount(id);
       toast.success('Conta excluída');
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
