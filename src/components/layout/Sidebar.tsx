@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -8,8 +8,10 @@ import {
   PieChart,
   BarChart3,
   Settings,
+  LogOut,
 } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
+import { useAuthStore } from '../../store/authStore';
 
 const sections = [
   {
@@ -49,6 +51,20 @@ const sections = [
 
 export default function Sidebar() {
   const { sidebarOpen } = useAppStore();
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
+  const initials = user?.name
+    .split(' ')
+    .map(n => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() ?? '?';
 
   return (
     <aside
@@ -102,20 +118,56 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer — sempre visível no rodapé, sem sobreposição */}
+      {/* Usuário logado */}
       <div style={{
         flexShrink: 0,
         margin: '8px 10px 12px',
         padding: '10px 12px',
         borderRadius: 10,
-        background: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(99,102,241,0.08))',
-        border: '1px solid rgba(99,102,241,0.15)',
+        background: 'var(--bg-primary)',
+        border: '1px solid var(--border-subtle)',
       }}>
-        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-blue)', marginBottom: 2 }}>
-          💡 Dica do dia
-        </div>
-        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-          Registre suas despesas diariamente para um controle mais preciso.
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Avatar com iniciais */}
+          <div style={{
+            width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+            background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '0.75rem', fontWeight: 700, color: 'white', letterSpacing: '0.02em',
+          }}>
+            {initials}
+          </div>
+
+          {/* Nome e e-mail */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              {user?.name}
+            </div>
+            <div style={{
+              fontSize: '0.68rem', color: 'var(--text-muted)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            }}>
+              {user?.email}
+            </div>
+          </div>
+
+          {/* Botão sair */}
+          <button
+            onClick={handleLogout}
+            title="Sair"
+            style={{
+              flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text-muted)', padding: 4, borderRadius: 6,
+              display: 'flex', alignItems: 'center', transition: 'color 0.15s ease',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-red)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+          >
+            <LogOut size={15} />
+          </button>
         </div>
       </div>
     </aside>
