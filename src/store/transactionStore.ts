@@ -3,6 +3,7 @@ import { db } from '../db';
 import { nanoid } from 'nanoid';
 import { addDays, addWeeks, addMonths, addYears } from 'date-fns';
 import type { Transaction, Recurrence } from '../types';
+import { useAuthStore } from './authStore';
 
 const MAX_RECURRING = 60;
 
@@ -33,15 +34,24 @@ export const useTransactionStore = create<TransactionStore>()((set, get) => ({
 
   loadTransactions: async () => {
     set({ loading: true });
-    const transactions = await db.transactions.orderBy('date').reverse().toArray();
+    const userId = useAuthStore.getState().user?.id;
+    let transactions: Transaction[];
+    if (userId) {
+      transactions = await db.transactions.where('userId').equals(userId).toArray();
+      transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    } else {
+      transactions = await db.transactions.orderBy('date').reverse().toArray();
+    }
     set({ transactions, loading: false });
   },
 
   addTransaction: async (data) => {
+    const userId = useAuthStore.getState().user?.id;
     const transaction: Transaction = {
       ...data,
       id: nanoid(),
       createdAt: new Date(),
+      userId,
     };
     await db.transactions.add(transaction);
     set((state) => ({ transactions: [transaction, ...state.transactions] }));
@@ -61,6 +71,7 @@ export const useTransactionStore = create<TransactionStore>()((set, get) => ({
           recurrence: undefined,
           recurrenceEndDate: undefined,
           createdAt: new Date(),
+          userId,
         });
         current = advanceDate(current, data.recurrence);
         count++;

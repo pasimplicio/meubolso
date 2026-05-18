@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { Account, Category, Transaction, Budget, Goal, GoalContribution } from '../types';
+import type { Account, Category, Transaction, Budget, Goal, GoalContribution, User } from '../types';
 
 export class MeuBolsoDB extends Dexie {
   accounts!: Table<Account>;
@@ -8,6 +8,7 @@ export class MeuBolsoDB extends Dexie {
   budgets!: Table<Budget>;
   goals!: Table<Goal>;
   goalContributions!: Table<GoalContribution>;
+  users!: Table<User>;
 
   constructor() {
     super('meubolso');
@@ -19,6 +20,16 @@ export class MeuBolsoDB extends Dexie {
       budgets: 'id, categoryId, [month+year]',
       goals: 'id, type, createdAt',
       goalContributions: 'id, goalId, date',
+    });
+
+    this.version(2).stores({
+      accounts: 'id, userId, type, createdAt',
+      categories: 'id, type, parentId, order',
+      transactions: 'id, userId, type, categoryId, accountId, date, status, createdAt',
+      budgets: 'id, userId, categoryId, [month+year]',
+      goals: 'id, userId, type, createdAt',
+      goalContributions: 'id, userId, goalId, date',
+      users: 'id, &email',
     });
   }
 }

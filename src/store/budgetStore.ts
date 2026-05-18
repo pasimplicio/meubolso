@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { db } from '../db';
 import { nanoid } from 'nanoid';
 import type { Budget } from '../types';
+import { useAuthStore } from './authStore';
 
 interface BudgetStore {
   budgets: Budget[];
@@ -20,12 +21,16 @@ export const useBudgetStore = create<BudgetStore>()((set, get) => ({
 
   loadBudgets: async () => {
     set({ loading: true });
-    const budgets = await db.budgets.toArray();
+    const userId = useAuthStore.getState().user?.id;
+    const budgets = userId
+      ? await db.budgets.where('userId').equals(userId).toArray()
+      : await db.budgets.toArray();
     set({ budgets, loading: false });
   },
 
   addBudget: async (data) => {
-    const budget: Budget = { ...data, id: nanoid() };
+    const userId = useAuthStore.getState().user?.id;
+    const budget: Budget = { ...data, id: nanoid(), userId };
     await db.budgets.add(budget);
     set((state) => ({ budgets: [...state.budgets, budget] }));
   },
@@ -56,12 +61,14 @@ export const useBudgetStore = create<BudgetStore>()((set, get) => ({
         (b) => b.categoryId === prev.categoryId && b.month === month && b.year === year
       );
       if (!existing) {
+        const userId = useAuthStore.getState().user?.id;
         const newBudget: Budget = {
           id: nanoid(),
           categoryId: prev.categoryId,
           amount: prev.amount,
           month,
           year,
+          userId,
         };
         await db.budgets.add(newBudget);
         set((state) => ({ budgets: [...state.budgets, newBudget] }));

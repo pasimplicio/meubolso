@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { db } from '../db';
 import { nanoid } from 'nanoid';
 import type { Account } from '../types';
+import { useAuthStore } from './authStore';
 
 interface AccountStore {
   accounts: Account[];
@@ -20,15 +21,20 @@ export const useAccountStore = create<AccountStore>()((set, get) => ({
 
   loadAccounts: async () => {
     set({ loading: true });
-    const accounts = await db.accounts.toArray();
+    const userId = useAuthStore.getState().user?.id;
+    const accounts = userId
+      ? await db.accounts.where('userId').equals(userId).toArray()
+      : await db.accounts.toArray();
     set({ accounts, loading: false });
   },
 
   addAccount: async (data) => {
+    const userId = useAuthStore.getState().user?.id;
     const account: Account = {
       ...data,
       id: nanoid(),
       createdAt: new Date(),
+      userId,
     };
     await db.accounts.add(account);
     set((state) => ({ accounts: [...state.accounts, account] }));

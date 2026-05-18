@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { db } from '../db';
 import { nanoid } from 'nanoid';
 import type { Goal, GoalContribution } from '../types';
+import { useAuthStore } from './authStore';
 
 interface GoalStore {
   goals: Goal[];
@@ -22,19 +23,22 @@ export const useGoalStore = create<GoalStore>()((set, get) => ({
 
   loadGoals: async () => {
     set({ loading: true });
+    const userId = useAuthStore.getState().user?.id;
     const [goals, contributions] = await Promise.all([
-      db.goals.toArray(),
-      db.goalContributions.toArray(),
+      userId ? db.goals.where('userId').equals(userId).toArray() : db.goals.toArray(),
+      userId ? db.goalContributions.where('userId').equals(userId).toArray() : db.goalContributions.toArray(),
     ]);
     set({ goals, contributions, loading: false });
   },
 
   addGoal: async (data) => {
+    const userId = useAuthStore.getState().user?.id;
     const goal: Goal = {
       ...data,
       id: nanoid(),
       currentAmount: 0,
       createdAt: new Date(),
+      userId,
     };
     await db.goals.add(goal);
     set((state) => ({ goals: [...state.goals, goal] }));
@@ -57,12 +61,14 @@ export const useGoalStore = create<GoalStore>()((set, get) => ({
   },
 
   addContribution: async (goalId, amount, notes) => {
+    const userId = useAuthStore.getState().user?.id;
     const contribution: GoalContribution = {
       id: nanoid(),
       goalId,
       amount,
       date: new Date(),
       notes,
+      userId,
     };
     await db.goalContributions.add(contribution);
 

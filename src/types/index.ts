@@ -10,8 +10,19 @@ export type ThemeMode = 'dark' | 'light';
 
 // ===== INTERFACES =====
 
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  salt: string;
+  passwordHash: string;
+  createdAt: Date;
+  lastLogin?: Date;
+}
+
 export interface Account {
   id: string;
+  userId?: string;
   name: string;
   type: AccountType;
   balance: number;
@@ -32,6 +43,7 @@ export interface Category {
 
 export interface Transaction {
   id: string;
+  userId?: string;
   type: TransactionType;
   amount: number;
   description: string;
@@ -49,6 +61,7 @@ export interface Transaction {
 
 export interface Budget {
   id: string;
+  userId?: string;
   categoryId: string;
   amount: number;
   month: number;
@@ -57,6 +70,7 @@ export interface Budget {
 
 export interface Goal {
   id: string;
+  userId?: string;
   name: string;
   targetAmount: number;
   currentAmount: number;
@@ -69,6 +83,7 @@ export interface Goal {
 
 export interface GoalContribution {
   id: string;
+  userId?: string;
   goalId: string;
   amount: number;
   date: Date;
