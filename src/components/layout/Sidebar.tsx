@@ -51,8 +51,12 @@ export default function Sidebar() {
   const { sidebarOpen } = useAppStore();
 
   return (
-    <aside className={`sidebar ${!sidebarOpen ? 'sidebar-hidden' : ''}`}>
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <aside
+      className={`sidebar ${!sidebarOpen ? 'sidebar-hidden' : ''}`}
+      style={{ display: 'flex', flexDirection: 'column' }}
+    >
+      {/* Nav items — scrollable, takes all available space */}
+      <nav style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {sections.map((section) => (
           <div key={section.label} style={{ marginBottom: 4 }}>
             <div style={{
@@ -75,12 +79,12 @@ export default function Sidebar() {
                     <div style={{
                       width: 28, height: 28, borderRadius: 7, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: isActive ? `${item.color}18` : 'transparent',
+                      background: isActive ? `${item.color}18` : `${item.color}0d`,
                       transition: 'background 0.2s',
                     }}>
                       <item.icon
                         size={16}
-                        style={{ color: isActive ? item.color : 'var(--text-muted)' }}
+                        style={{ color: isActive ? item.color : `${item.color}cc` }}
                       />
                     </div>
                     <span style={{
@@ -98,10 +102,12 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer da sidebar */}
+      {/* Footer — sempre visível no rodapé, sem sobreposição */}
       <div style={{
-        position: 'absolute', bottom: 16, left: 12, right: 12,
-        padding: '10px 12px', borderRadius: 10,
+        flexShrink: 0,
+        margin: '8px 10px 12px',
+        padding: '10px 12px',
+        borderRadius: 10,
         background: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(99,102,241,0.08))',
         border: '1px solid rgba(99,102,241,0.15)',
       }}>
