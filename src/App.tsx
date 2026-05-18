@@ -9,6 +9,7 @@ import { useBudgetStore } from './store/budgetStore';
 import { useGoalStore } from './store/goalStore';
 import { initializeDefaults } from './db';
 import { ToastProvider } from './contexts/ToastContext';
+import { ConfirmProvider } from './components/ui/ConfirmDialog';
 import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
 import MobileNav from './components/layout/MobileNav';
@@ -105,7 +106,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
-        <AppContent />
+        <ConfirmProvider>
+          <AppContent />
+        </ConfirmProvider>
       </ToastProvider>
     </BrowserRouter>
   );

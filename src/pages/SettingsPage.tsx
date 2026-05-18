@@ -3,6 +3,7 @@ import { Download, Upload, Trash2, Moon, Sun, Info } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
 import { db } from '../db';
 import { useToast } from '../contexts/ToastContext';
+import { useConfirm } from '../components/ui/ConfirmDialog';
 import { useAccountStore } from '../store/accountStore';
 import { useTransactionStore } from '../store/transactionStore';
 import { useCategoryStore } from '../store/categoryStore';
@@ -12,6 +13,7 @@ import { useGoalStore } from '../store/goalStore';
 export default function SettingsPage() {
   const { theme, toggleTheme } = useAppStore();
   const toast = useToast();
+  const confirm = useConfirm();
   const { loadAccounts } = useAccountStore();
   const { loadTransactions } = useTransactionStore();
   const { loadCategories } = useCategoryStore();
@@ -75,7 +77,14 @@ export default function SettingsPage() {
   };
 
   const handleClear = async () => {
-    if (confirm('⚠️ ATENÇÃO: Todos os dados serão apagados permanentemente. Deseja continuar?')) {
+    const ok = await confirm({
+      title: 'Apagar todos os dados?',
+      message: 'Todas as contas, transações, orçamentos e metas serão removidos permanentemente. Esta ação não pode ser desfeita.',
+      confirmLabel: 'Apagar tudo',
+      cancelLabel: 'Cancelar',
+      variant: 'danger',
+    });
+    if (ok) {
       await db.accounts.clear();
       await db.categories.clear();
       await db.transactions.clear();

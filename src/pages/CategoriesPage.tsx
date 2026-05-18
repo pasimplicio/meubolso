@@ -3,11 +3,13 @@ import { motion } from 'framer-motion';
 import { Plus, Trash2, Edit3 } from 'lucide-react';
 import { useCategoryStore } from '../store/categoryStore';
 import { useToast } from '../contexts/ToastContext';
+import { useConfirm } from '../components/ui/ConfirmDialog';
 import CategoryModal from '../components/categories/CategoryModal';
 
 export default function CategoriesPage() {
   const { categories, deleteCategory } = useCategoryStore();
   const toast = useToast();
+  const confirm = useConfirm();
   const [tab, setTab] = useState<'expense' | 'income'>('expense');
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -16,7 +18,13 @@ export default function CategoriesPage() {
   const subs = (parentId: string) => categories.filter((c) => c.parentId === parentId);
 
   const handleDelete = async (id: string) => {
-    if (confirm('Excluir esta categoria?')) {
+    const ok = await confirm({
+      title: 'Excluir categoria?',
+      message: 'As subcategorias também serão removidas. As transações vinculadas não serão afetadas.',
+      confirmLabel: 'Excluir',
+      variant: 'danger',
+    });
+    if (ok) {
       await deleteCategory(id);
       toast.success('Categoria excluída');
     }

@@ -7,6 +7,7 @@ import { useCategoryStore } from '../store/categoryStore';
 import { useAppStore } from '../store/appStore';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { useToast } from '../contexts/ToastContext';
+import { useConfirm } from '../components/ui/ConfirmDialog';
 import TransactionModal from '../components/transactions/TransactionModal';
 
 export default function TransactionsPage() {
@@ -15,6 +16,7 @@ export default function TransactionsPage() {
   const { accounts } = useAccountStore();
   const { categories } = useCategoryStore();
   const toast = useToast();
+  const confirm = useConfirm();
 
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -59,7 +61,13 @@ export default function TransactionsPage() {
   }, [baseFiltered, filterTag]);
 
   const handleDelete = async (id: string) => {
-    if (confirm('Deseja excluir esta transação?')) {
+    const ok = await confirm({
+      title: 'Excluir transação?',
+      message: 'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
+      variant: 'danger',
+    });
+    if (ok) {
       await deleteTransaction(id);
       toast.success('Transação excluída');
     }

@@ -4,6 +4,7 @@ import { Plus, Trash2, DollarSign } from 'lucide-react';
 import { useGoalStore } from '../store/goalStore';
 import { formatCurrency, formatDate, goalTypeLabels } from '../lib/utils';
 import { useToast } from '../contexts/ToastContext';
+import { useConfirm } from '../components/ui/ConfirmDialog';
 import ProgressBar from '../components/ui/ProgressBar';
 import GoalModal from '../components/goals/GoalModal';
 import ContributionModal from '../components/goals/ContributionModal';
@@ -11,11 +12,18 @@ import ContributionModal from '../components/goals/ContributionModal';
 export default function GoalsPage() {
   const { goals, deleteGoal } = useGoalStore();
   const toast = useToast();
+  const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [contribGoalId, setContribGoalId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
-    if (confirm('Excluir esta meta?')) {
+    const ok = await confirm({
+      title: 'Excluir meta?',
+      message: 'Todo o histórico de contribuições desta meta será perdido permanentemente.',
+      confirmLabel: 'Excluir',
+      variant: 'danger',
+    });
+    if (ok) {
       await deleteGoal(id);
       toast.success('Meta excluída');
     }

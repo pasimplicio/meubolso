@@ -4,17 +4,25 @@ import { Plus, Trash2, Edit3 } from 'lucide-react';
 import { useAccountStore } from '../store/accountStore';
 import { formatCurrency, accountTypeLabels, accountTypeIcons } from '../lib/utils';
 import { useToast } from '../contexts/ToastContext';
+import { useConfirm } from '../components/ui/ConfirmDialog';
 import AccountModal from '../components/accounts/AccountModal';
 
 export default function AccountsPage() {
   const { accounts, deleteAccount, getTotalBalance } = useAccountStore();
   const toast = useToast();
+  const confirm = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const total = getTotalBalance();
 
   const handleDelete = async (id: string) => {
-    if (confirm('Excluir esta conta?')) {
+    const ok = await confirm({
+      title: 'Excluir conta?',
+      message: 'Esta ação não pode ser desfeita. Todas as transações vinculadas permanecerão no histórico.',
+      confirmLabel: 'Excluir',
+      variant: 'danger',
+    });
+    if (ok) {
       await deleteAccount(id);
       toast.success('Conta excluída');
     }
