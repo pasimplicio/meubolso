@@ -30,6 +30,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import LandingPage from './pages/LandingPage';
 import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -92,6 +93,7 @@ function AppContent() {
       <Routes>
         <Route path="/"           element={<LandingPage />} />
         <Route path="/privacidade" element={<PrivacyPage />} />
+        <Route path="/termos"     element={<TermsPage />} />
         <Route path="/login"      element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register"   element={<PublicRoute><RegisterPage /></PublicRoute>} />
         <Route path="*"           element={<Navigate to="/" replace />} />

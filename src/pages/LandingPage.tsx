@@ -125,6 +125,7 @@ export default function LandingPage() {
       <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '22px 24px', textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
           <Link to="/privacidade" className="auth-link">Política de Privacidade</Link>
+          <Link to="/termos" className="auth-link">Termos de Uso</Link>
           <Link to="/login" className="auth-link">Entrar</Link>
           <Link to="/register" className="auth-link">Criar conta</Link>
         </div>
