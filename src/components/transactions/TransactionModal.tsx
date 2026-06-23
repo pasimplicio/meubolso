@@ -24,7 +24,7 @@ interface FormData {
   notes?: string;
 }
 
-/** Agrupa categorias por Tipo → Grupo para o seletor. */
+/** Agrupa categorias por Tipo → Grupo para o seletor, em ordem alfabética. */
 function groupCategories(cats: Category[]) {
   const byKey = new Map<string, { nature: string; group: string; items: Category[] }>();
   for (const c of cats) {
@@ -32,7 +32,10 @@ function groupCategories(cats: Category[]) {
     if (!byKey.has(key)) byKey.set(key, { nature: c.nature, group: c.group, items: [] });
     byKey.get(key)!.items.push(c);
   }
-  return [...byKey.values()];
+  const groups = [...byKey.values()];
+  for (const g of groups) g.items.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  groups.sort((a, b) => a.group.localeCompare(b.group, 'pt-BR') || a.nature.localeCompare(b.nature, 'pt-BR'));
+  return groups;
 }
 
 interface Props {
@@ -209,7 +212,7 @@ export default function TransactionModal({ isOpen, onClose, editId }: Props) {
               {groupCategories(filteredCategories).map((g) => (
                 <optgroup
                   key={`${g.nature}-${g.group}`}
-                  label={g.nature === 'receita' ? g.group : `${natureMeta[g.nature as keyof typeof natureMeta].label} · ${g.group}`}
+                  label={g.nature === 'receita' ? g.group : `${natureMeta[g.nature as keyof typeof natureMeta]?.label ?? ''} · ${g.group}`}
                 >
                   {g.items.map((c) => (
                     <option key={c.id} value={c.id}>{c.icon} {c.name}</option>

@@ -48,8 +48,8 @@ export default function StatementImportModal({ isOpen, onClose }: Props) {
 
   const reset = () => { setParsed(null); setRows([]); setAccountId(''); setSetFinalBalance(true); setParsing(false); };
 
-  const incomeCats = useMemo(() => categories.filter((c) => c.type === 'income'), [categories]);
-  const expenseCats = useMemo(() => categories.filter((c) => c.type === 'expense'), [categories]);
+  const incomeCats = useMemo(() => categories.filter((c) => c.type === 'income').sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')), [categories]);
+  const expenseCats = useMemo(() => categories.filter((c) => c.type === 'expense').sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')), [categories]);
   const resolveCat = (name: string, isIncome: boolean) =>
     (isIncome ? incomeCats : expenseCats).find((c) => c.name === name)?.id ?? '';
 

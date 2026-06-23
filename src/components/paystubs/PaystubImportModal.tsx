@@ -47,7 +47,10 @@ function groupExpense(cats: Category[]) {
     if (!map.has(key)) map.set(key, { nature: c.nature, group: c.group, items: [] });
     map.get(key)!.items.push(c);
   }
-  return [...map.values()];
+  const groups = [...map.values()];
+  for (const g of groups) g.items.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  groups.sort((a, b) => a.group.localeCompare(b.group, 'pt-BR') || a.nature.localeCompare(b.nature, 'pt-BR'));
+  return groups;
 }
 
 export default function PaystubImportModal({ isOpen, onClose }: Props) {
