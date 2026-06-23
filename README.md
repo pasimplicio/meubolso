@@ -1,105 +1,57 @@
 # 💰 MeuBolso — Controle Financeiro Pessoal
 
-Aplicativo web moderno, responsivo e multiplataforma para controle financeiro pessoal completo. Projetado com design premium dark-mode glassmorphism. Compatível com web e Android (APK via Capacitor).
+Aplicativo web moderno e responsivo para controle financeiro pessoal completo, com **sincronização na nuvem** via Firebase (Auth + Firestore offline-first). UI em pt-BR, moeda BRL. Também empacotável como APK Android via Capacitor.
 
-## 🚀 O que foi implementado
+## ✨ Funcionalidades
+- **Transações** com forma de pagamento e conciliação; **categorias em 3 níveis** (Tipo → Grupo → Categoria), modelo portado de uma planilha Power BI.
+- **Contas**, **Orçamentos** (com clonagem do mês anterior) e **Metas** (com contribuições).
+- **Investimentos** com rentabilidade calculada automaticamente por taxa (Prefixado / % CDI / % Selic / IPCA+), usando taxas reais do **Banco Central (API SGS)**.
+- **Contracheque**: importa o PDF do holerite e lança o bruto como receita e cada desconto como despesa por categoria.
+- **Importação de extrato bancário** em PDF (Mercado Pago) com categorização automática e deduplicação por ID da operação.
+- **Dashboard** e **Relatórios** com gráficos (Recharts); **tema claro (verde) e escuro**.
+- **Login** por e-mail/senha ou **Google**.
 
-O projeto foi inicializado do zero e agora possui uma base sólida com as seguintes features completas:
+## 🛠️ Stack
+React 19 · Vite · TypeScript · Zustand · **Firebase (Auth + Firestore)** · Recharts · Framer Motion · React Hook Form · pdfjs-dist · Tailwind CSS v4 · Capacitor (APK).
 
-1. **Fundação Tecnológica & Design System**
-   - Setup com React 19, Vite 6 e TypeScript.
-   - Integração com Tailwind CSS v4 para estilos utilitários.
-   - Design System customizado (`index.css`) com suporte a Dark Mode, Glassmorphism, botões responsivos e animações com Framer Motion.
-   - Banco de dados local com `Dexie.js` (IndexedDB) para garantir que o aplicativo funcione **100% offline** e com privacidade total (nenhum dado sai do dispositivo).
-   - Gerenciamento de estado global com `Zustand` (tema, barra lateral, meses).
-   - Configuração do **Capacitor** para geração de build Android nativo (`APK`).
+## 📦 Rodar localmente
 
-2. **Módulo de Dashboard**
-   - Cartões de resumo de contas (Saldo, Receitas, Despesas, Saldo do Mês).
-   - Gráfico de área para evolução do Fluxo de Caixa.
-   - Gráfico de donut para Gastos por Categoria do mês atual.
-   - Feed de últimas transações e contas pendentes.
-   - Progresso rápido das Metas financeiras ativas.
+```bash
+npm install
+cp .env.example .env   # preencha com as chaves do seu projeto Firebase
+npm run dev            # http://localhost:5173
+npm run build          # type-check (tsc) + build de produção em dist/
+npm run lint           # eslint
+```
 
-3. **Módulo de Transações**
-   - Listagem com filtro dinâmico de texto e tipos (Receita, Despesa, Transferência).
-   - Modal de criação/edição inteligente com abas, data, status (Pago/Pendente) e atualizações automáticas dos saldos bancários.
+### Variáveis de ambiente (`.env`)
+São as chaves do app **Web** do Firebase (Console → Configurações do projeto → Seus apps → SDK). Veja `.env.example`:
 
-4. **Módulo de Contas**
-   - Gestão de diferentes tipos de contas (Conta Corrente, Poupança, Cartões de Crédito, etc.).
-   - Cartões visuais que refletem dinamicamente as cores e ícones baseados no tipo de conta e saldo.
+```
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+```
 
-5. **Módulo de Categorias**
-   - Categorias padrão carregadas dinamicamente ao iniciar o app.
-   - Suporte para divisão por Receita/Despesa e hierarquia de Subcategorias.
-   - Seleção de ícones (emojis) e cores.
+## 🔥 Configuração do Firebase
+1. **Authentication → Sign-in method**: ative **E-mail/senha** e **Google**.
+2. **Firestore Database**: crie o banco (modo produção) e publique as regras de [`firestore.rules`](firestore.rules).
+3. **Authentication → Settings → Authorized domains**: adicione o domínio de produção (ex.: `meubolso.vercel.app`) — `localhost` já vem liberado.
 
-6. **Módulo de Orçamento**
-   - Criação de metas de gasto por categoria.
-   - Barras de progresso com alertas automáticos baseados no limite estipulado (alertas laranjas para mais de 80% e vermelhos para estouro de orçamento).
-   - Capacidade de clonar orçamentos do mês anterior com um clique.
-
-7. **Módulo de Metas**
-   - Criação de metas de prazo longo e reserva de emergência com target e deadlines.
-   - Depósito de contribuições isoladas para o fundo da meta e sistema de confetes ao completar 100%.
-
-8. **Relatórios e Analytics**
-   - 4 diferentes visões via `Recharts`:
-     1. Receitas x Despesas em barras por mês.
-     2. Gasto anual em categorias por gráfico circular.
-     3. Evolução acumulada de patrimônio.
-     4. Linha de tendência mês a mês.
-
-9. **Configurações e Gestão de Dados**
-   - **Sistema completo de Backup JSON**: Opção de exportar todos os dados locais e importar os backups quando necessário (excelente para trocar de aparelho).
-   - Função de "Limpar Todos os Dados" para reiniciar a carteira do zero de forma segura.
-
-## 🛠️ Tecnologias Principais
-
-- **Frontend**: React 19, TypeScript, Vite
-- **UI/Estilos**: Tailwind CSS v4, Framer Motion, Lucide React
-- **Banco de Dados**: Dexie.js (IndexedDB wrapper)
-- **Gerenciador de Estado**: Zustand
-- **Formulários**: React Hook Form
-- **Gráficos**: Recharts
-- **Mobile**: Capacitor (Ionic) para empacotamento em APK
-
-## 📦 Como rodar localmente
-
-1. Instale as dependências:
-   ```bash
-   npm install
-   ```
-
-2. Inicie o servidor de desenvolvimento Vite:
-   ```bash
-   npm run dev
-   ```
-
-3. Acesse no navegador em `http://localhost:5173`.
+## 🚀 Deploy na Vercel (via GitHub)
+1. Importe o repositório na Vercel — o framework **Vite** é detectado automaticamente (build `npm run build`, saída `dist`).
+2. Em **Settings → Environment Variables**, adicione as 6 variáveis `VITE_FIREBASE_*` (ambientes **Production** e **Preview**).
+3. Faça o deploy. O [`vercel.json`](vercel.json) já cuida do **fallback de SPA** e do header `Cross-Origin-Opener-Policy: same-origin-allow-popups` (necessário para o login com Google funcionar).
+4. Adicione o domínio gerado pela Vercel em **Firebase → Authentication → Authorized domains**.
 
 ## 📱 Gerando APK (Android)
-
-O app está configurado com Capacitor para se transformar em um aplicativo Android real.
-Para criar o app Android siga estes passos:
-
-1. Faça o build web do projeto de produção:
-   ```bash
-   npm run build
-   ```
-
-2. Adicione a plataforma Android ao projeto (uma única vez):
-   ```bash
-   npx cap add android
-   ```
-
-3. Sincronize os arquivos compilados com o projeto Android:
-   ```bash
-   npx cap sync
-   ```
-
-4. Abra o projeto nativo no Android Studio (requer Android Studio instalado):
-   ```bash
-   npx cap open android
-   ```
-   No Android Studio, você pode ir em **Build > Build Bundle(s) / APK(s) > Build APK(s)** para gerar seu `.apk`.
+```bash
+npm run build
+npx cap add android   # uma única vez
+npx cap sync
+npx cap open android  # gere o APK no Android Studio
+```
+> Observação: o login **Google por popup** não funciona dentro do WebView do APK — nesse caso é necessário o plugin nativo de autenticação do Google. O login por e-mail/senha funciona normalmente.
