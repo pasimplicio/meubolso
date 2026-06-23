@@ -246,7 +246,8 @@ export function guessStatementCategoryName(description: string, isIncome: boolea
   // Despesas
   if (/cart[ãa]o de cr[ée]dito|fatura|santander|visa|mastercard|elo cred/.test(d)) return 'Cartão de crédito';
   if (/uber/.test(d)) return 'Uber';
-  if (/\b99\b|99 tecnologia/.test(d)) return '99 Táxi';
+  if (/\b99\b|99 ?pay|99 tecnologia/.test(d)) return '99 Táxi';
+  if (/recargapay|recarga ?pay/.test(d)) return 'Ônibus';
   if (/posto|combust[íi]vel|gasolina|ipiranga|shell|petrobr/.test(d)) return 'Combustível';
   if (/supermerc|mateus|atacad|carrefour|assa[íi]|big bompre|distribuidora/.test(d)) return 'Supermercado';
   if (/panificad|padaria|panlan|pao\b/.test(d)) return 'Padaria';
@@ -257,7 +258,7 @@ export function guessStatementCategoryName(description: string, isIncome: boolea
   if (/farm[áa]cia|drogaria|pague menos|pacheco|drogasil|raia/.test(d)) return 'Farmácia / Medicamentos';
   if (/empr[ée]stimo|financiamento|realize|cons[óo]rcio|bcon|midway|crediario|cr[ée]dito financ|d[íi]vida/.test(d)) return 'Empréstimos';
   if (/telecom|claro|vivo|tim\b|oi\b|internet|net\b/.test(d)) return 'Internet';
-  if (/netflix|spotify|prime|streaming|anthropic|claude|recargapay|play servicos|disney|hbo|youtube/.test(d)) return 'TV e Streaming';
+  if (/netflix|spotify|prime|streaming|anthropic|claude|play servicos|disney|hbo|youtube/.test(d)) return 'TV e Streaming';
   if (/uber|99|taxi|metr[ôo]|[ôo]nibus/.test(d)) return 'Uber';
   if (/transfer|reservado|emerg[êe]ncia|pix enviado paulo alves|simplicio/.test(d)) return 'Transferências';
   return 'Outros (Despesa)';
