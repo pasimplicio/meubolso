@@ -150,14 +150,21 @@ export function initializeDefaults(): Promise<void> {
 export function resetInitState() { initPromise = null; }
 
 async function doInitializeDefaults() {
-  const count = await db.categories.count();
-  if (count === 0) {
+  // Garante TODA a taxonomia padrão: adiciona as categorias que faltam (idempotente),
+  // mesmo que a conta já tenha algumas (ex.: só as criadas por uma importação).
+  const existing = await db.categories.toArray();
+  const keyOf = (c: { type: string; group: string; name: string }) =>
+    `${c.type}|${c.group}|${c.name.trim().toLowerCase()}`;
+  const have = new Set(existing.map(keyOf));
+  const missing = defaultCategories.filter((c) => !have.has(keyOf(c)));
+
+  if (missing.length > 0) {
     const { nanoid } = await import('nanoid');
-    const cats: Category[] = defaultCategories.map((cat) => ({ ...cat, id: nanoid(), userId: uid() }));
+    const userId = uid();
+    const cats: Category[] = missing.map((cat) => ({ ...cat, id: nanoid(), userId }));
     await db.categories.bulkAdd(cats);
-  } else {
-    await dedupeCategories();
   }
+  if (existing.length > 0) await dedupeCategories();
 }
 
 /** Remove categorias duplicadas (tipo+natureza+grupo+nome), reapontando vínculos. */
