@@ -5,7 +5,8 @@ import { useTransactionStore } from '../../store/transactionStore';
 import { useAccountStore } from '../../store/accountStore';
 import { useCategoryStore } from '../../store/categoryStore';
 import { useToast } from '../../contexts/ToastContext';
-import type { TransactionType, TransactionStatus, Recurrence } from '../../types';
+import { paymentMethods, paymentMethodMeta, natureMeta } from '../../db/seedData';
+import type { TransactionType, TransactionStatus, Recurrence, PaymentMethod, Category } from '../../types';
 
 interface FormData {
   type: TransactionType;
@@ -16,9 +17,22 @@ interface FormData {
   toAccountId?: string;
   date: string;
   status: TransactionStatus;
+  paymentMethod?: PaymentMethod | '';
+  reconciled?: boolean;
   recurrence?: Recurrence | '';
   recurrenceEndDate?: string;
   notes?: string;
+}
+
+/** Agrupa categorias por Tipo → Grupo para o seletor. */
+function groupCategories(cats: Category[]) {
+  const byKey = new Map<string, { nature: string; group: string; items: Category[] }>();
+  for (const c of cats) {
+    const key = `${c.nature}__${c.group}`;
+    if (!byKey.has(key)) byKey.set(key, { nature: c.nature, group: c.group, items: [] });
+    byKey.get(key)!.items.push(c);
+  }
+  return [...byKey.values()];
 }
 
 interface Props {
@@ -38,6 +52,8 @@ export default function TransactionModal({ isOpen, onClose, editId }: Props) {
       type: 'expense',
       status: 'paid',
       date: new Date().toISOString().split('T')[0],
+      paymentMethod: '',
+      reconciled: false,
       recurrence: '',
     },
   });
@@ -61,6 +77,8 @@ export default function TransactionModal({ isOpen, onClose, editId }: Props) {
         setValue('toAccountId', t.toAccountId || '');
         setValue('date', new Date(t.date).toISOString().split('T')[0]);
         setValue('status', t.status);
+        setValue('paymentMethod', t.paymentMethod || '');
+        setValue('reconciled', t.reconciled ?? false);
         setValue('recurrence', t.recurrence || '');
         setValue('recurrenceEndDate', t.recurrenceEndDate ? new Date(t.recurrenceEndDate).toISOString().split('T')[0] : '');
         setValue('notes', t.notes || '');
@@ -71,6 +89,8 @@ export default function TransactionModal({ isOpen, onClose, editId }: Props) {
         type: 'expense',
         status: 'paid',
         date: new Date().toISOString().split('T')[0],
+        paymentMethod: '',
+        reconciled: false,
         recurrence: '',
         recurrenceEndDate: '',
       });
@@ -112,6 +132,8 @@ export default function TransactionModal({ isOpen, onClose, editId }: Props) {
       toAccountId: data.type === 'transfer' ? data.toAccountId : undefined,
       date: new Date(data.date),
       status: data.status,
+      paymentMethod: data.paymentMethod ? (data.paymentMethod as PaymentMethod) : undefined,
+      reconciled: data.reconciled ?? false,
       recurrence: data.recurrence ? (data.recurrence as Recurrence) : undefined,
       recurrenceEndDate: data.recurrence && data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : undefined,
       tags: tags.length > 0 ? tags : undefined,
@@ -184,8 +206,15 @@ export default function TransactionModal({ isOpen, onClose, editId }: Props) {
             <label className="input-label">Categoria</label>
             <select className="select-field" {...register('categoryId', { required: true })}>
               <option value="">Selecione</option>
-              {filteredCategories.map((c) => (
-                <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+              {groupCategories(filteredCategories).map((g) => (
+                <optgroup
+                  key={`${g.nature}-${g.group}`}
+                  label={g.nature === 'receita' ? g.group : `${natureMeta[g.nature as keyof typeof natureMeta].label} · ${g.group}`}
+                >
+                  {g.items.map((c) => (
+                    <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>
@@ -224,6 +253,21 @@ export default function TransactionModal({ isOpen, onClose, editId }: Props) {
               <option value="pending">⏳ Pendente</option>
             </select>
           </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'end' }}>
+          <div>
+            <label className="input-label">Forma de pagamento</label>
+            <select className="select-field" {...register('paymentMethod')}>
+              <option value="">Não informado</option>
+              {paymentMethods.map((m) => (
+                <option key={m} value={m}>{paymentMethodMeta[m].icon} {paymentMethodMeta[m].label}</option>
+              ))}
+            </select>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem', cursor: 'pointer', paddingBottom: 10, whiteSpace: 'nowrap' }}>
+            <input type="checkbox" {...register('reconciled')} /> Conciliado
+          </label>
         </div>
 
         <div>

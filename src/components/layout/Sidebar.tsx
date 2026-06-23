@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -7,6 +8,8 @@ import {
   Target,
   PieChart,
   BarChart3,
+  TrendingUp,
+  FileText,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -26,6 +29,8 @@ const sections = [
       { to: '/transactions', icon: ArrowLeftRight, label: 'Transações',  color: '#8b5cf6' },
       { to: '/accounts',     icon: CreditCard,     label: 'Contas',       color: '#10b981' },
       { to: '/categories',   icon: Tag,            label: 'Categorias',   color: '#f59e0b' },
+      { to: '/contracheque', icon: FileText,       label: 'Contracheque', color: '#0ea5e9' },
+      { to: '/investimentos', icon: TrendingUp,    label: 'Investimentos', color: '#22c55e' },
     ],
   },
   {
@@ -49,13 +54,23 @@ const sections = [
   },
 ];
 
+const isMobile = () => typeof window !== 'undefined' && window.innerWidth <= 768;
+
 export default function Sidebar() {
-  const { sidebarOpen } = useAppStore();
+  const { sidebarOpen, setSidebarOpen } = useAppStore();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  // No celular, a sidebar começa recolhida.
+  useEffect(() => {
+    if (isMobile()) setSidebarOpen(false);
+  }, []);
+
+  // Fecha a sidebar ao navegar no celular (clicar em qualquer item).
+  const closeOnMobile = () => { if (isMobile()) setSidebarOpen(false); };
+
+  const handleLogout = async () => {
+    await logout();
     navigate('/login', { replace: true });
   };
 
@@ -71,7 +86,47 @@ export default function Sidebar() {
       className={`sidebar ${!sidebarOpen ? 'sidebar-hidden' : ''}`}
       style={{ display: 'flex', flexDirection: 'column' }}
     >
-      {/* Nav items — scrollable, takes all available space */}
+      {/* Marca */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '2px 6px 14px' }}>
+        <img src="/logo.png" alt="MeuBolso" style={{ width: 36, height: 36, objectFit: 'contain', flexShrink: 0 }} />
+        <span style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.02em' }} className="gradient-text">
+          MeuBolso
+        </span>
+      </div>
+
+      {/* Perfil do usuário (topo) */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 7,
+        padding: '14px 13px', marginBottom: 12, borderRadius: 14,
+        background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)',
+      }}>
+        <div style={{
+          width: 46, height: 46, borderRadius: '50%', flexShrink: 0,
+          background: 'var(--accent-primary-soft)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '1.05rem', fontWeight: 800, color: 'var(--accent-primary)', letterSpacing: '0.02em',
+        }}>
+          {initials}
+        </div>
+        <div style={{ width: '100%', minWidth: 0 }}>
+          <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {user?.name}
+          </div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+            {user?.email}
+          </div>
+        </div>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          padding: '3px 10px', borderRadius: 999,
+          fontSize: '0.62rem', fontWeight: 800, letterSpacing: '0.05em',
+          color: 'white', background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+        }}>
+          ⚡ PRO
+        </span>
+      </div>
+
+      {/* Navegação — rolável, ocupa o espaço restante */}
       <nav style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {sections.map((section) => (
           <div key={section.label} style={{ marginBottom: 4 }}>
@@ -87,6 +142,7 @@ export default function Sidebar() {
                 key={item.to}
                 to={item.to}
                 end={item.to === '/'}
+                onClick={closeOnMobile}
                 className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
                 style={({ isActive }) => isActive ? { color: item.color } : {}}
               >
@@ -118,58 +174,22 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Usuário logado */}
-      <div style={{
-        flexShrink: 0,
-        margin: '8px 10px 12px',
-        padding: '10px 12px',
-        borderRadius: 10,
-        background: 'var(--bg-primary)',
-        border: '1px solid var(--border-subtle)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* Avatar com iniciais */}
-          <div style={{
-            width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-            background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.75rem', fontWeight: 700, color: 'white', letterSpacing: '0.02em',
-          }}>
-            {initials}
-          </div>
-
-          {/* Nome e e-mail */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>
-              {user?.name}
-            </div>
-            <div style={{
-              fontSize: '0.68rem', color: 'var(--text-muted)',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>
-              {user?.email}
-            </div>
-          </div>
-
-          {/* Botão sair */}
-          <button
-            onClick={handleLogout}
-            title="Sair"
-            style={{
-              flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--text-muted)', padding: 4, borderRadius: 6,
-              display: 'flex', alignItems: 'center', transition: 'color 0.15s ease',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-red)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-          >
-            <LogOut size={15} />
-          </button>
+      {/* Sair (rodapé) */}
+      <button
+        onClick={handleLogout}
+        className="sidebar-nav-item"
+        style={{
+          flexShrink: 0, marginTop: 8, width: '100%', border: 'none',
+          background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent-red-soft)'; e.currentTarget.style.color = 'var(--accent-red)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+      >
+        <div style={{ width: 28, height: 28, borderRadius: 7, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--accent-red-soft)' }}>
+          <LogOut size={15} style={{ color: 'var(--accent-red)' }} />
         </div>
-      </div>
+        <span style={{ fontSize: '0.845rem', fontWeight: 600 }}>Sair</span>
+      </button>
     </aside>
   );
 }

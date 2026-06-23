@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Variáveis de ambiente (Firebase)
+.env
+.env.local
+
 # Claude Code local settings
 .claude/
 

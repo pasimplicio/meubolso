@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Wallet, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
 import { useAccountStore } from '../store/accountStore';
+import GoogleButton from '../components/auth/GoogleButton';
 import type { AccountType } from '../types';
 
 const ACCOUNT_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#f43f5e', '#6366f1'];
@@ -22,7 +23,7 @@ const strengthColor = ['', '#f43f5e', '#f59e0b', '#10b981', '#10b981'];
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register } = useAuthStore();
+  const { register, loginWithGoogle } = useAuthStore();
   const { addAccount } = useAccountStore();
 
   const [step, setStep] = useState(0);
@@ -62,6 +63,19 @@ export default function RegisterPage() {
     }
   };
 
+  const handleGoogle = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const ok = await loginWithGoogle();
+      if (ok) navigate('/', { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Erro ao entrar com Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const finishOnboarding = async (createAccount: boolean) => {
     setLoading(true);
     try {
@@ -90,11 +104,8 @@ export default function RegisterPage() {
         transition={{ duration: 0.3 }}
       >
         <div className="auth-logo">
-          <div className="auth-logo-icon">
-            <Wallet size={22} color="white" />
-          </div>
+          <img src="/logo.png" alt="MeuBolso" className="auth-logo-img" />
         </div>
-        <h1 className="auth-title">MeuBolso</h1>
 
         {/* Step indicator */}
         <div className="auth-steps">
@@ -184,7 +195,10 @@ export default function RegisterPage() {
               </form>
 
               <div className="auth-divider">ou</div>
-              <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+
+              <GoogleButton onClick={handleGoogle} disabled={loading} label="Cadastrar com Google" />
+
+              <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 18 }}>
                 Já tem conta?{' '}
                 <Link to="/login" className="auth-link">Fazer login</Link>
               </div>

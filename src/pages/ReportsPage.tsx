@@ -5,11 +5,13 @@ import {
   PieChart, Pie, Cell, LineChart, Line, AreaChart, Area,
   CartesianGrid, Legend,
 } from 'recharts';
-import { TrendingUp, TrendingDown, BarChart3, PieChart as PieIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, BarChart3, PieChart as PieIcon, Layers } from 'lucide-react';
 import { useTransactionStore } from '../store/transactionStore';
 import { useCategoryStore } from '../store/categoryStore';
 import { useAppStore } from '../store/appStore';
 import { formatCurrency, getMonthName } from '../lib/utils';
+import { natureMeta } from '../db/seedData';
+import type { ExpenseNature } from '../types';
 
 // Tooltip customizado reutilizável
 function CustomTooltip({ active, payload, label }: any) {
@@ -44,7 +46,10 @@ const tabs = [
   { label: 'Gastos por Categoria', icon: PieIcon },
   { label: 'Evolução do Saldo',    icon: TrendingUp },
   { label: 'Tendência',            icon: TrendingDown },
+  { label: 'Por Natureza',         icon: Layers },
 ];
+
+const NATURE_ORDER: ExpenseNature[] = ['fixas', 'variaveis', 'extras', 'adicionais'];
 
 export default function ReportsPage() {
   const { transactions } = useTransactionStore();
@@ -80,6 +85,27 @@ export default function ReportsPage() {
       .slice(0, 8);
   }, [transactions, categories, currentYear]);
 
+  const natureMonthly = useMemo(() => {
+    const catNature = new Map(categories.map((c) => [c.id, c.nature]));
+    const data = [];
+    for (let m = 1; m <= 12; m++) {
+      const row: Record<string, number | string> = { month: getMonthName(m).substring(0, 3) };
+      for (const n of NATURE_ORDER) row[natureMeta[n].label] = 0;
+      transactions
+        .filter((t) => {
+          const d = new Date(t.date);
+          return d.getFullYear() === currentYear && d.getMonth() + 1 === m && t.type === 'expense' && t.status === 'paid';
+        })
+        .forEach((t) => {
+          const nat = (catNature.get(t.categoryId) ?? 'variaveis') as ExpenseNature;
+          const key = natureMeta[nat]?.label ?? natureMeta.variaveis.label;
+          row[key] = (row[key] as number) + t.amount;
+        });
+      data.push(row);
+    }
+    return data;
+  }, [transactions, categories, currentYear]);
+
   const balanceEvolution = useMemo(() => {
     let cumulative = 0;
     return monthlyData.map((d) => { cumulative += d.Saldo; return { ...d, Acumulado: cumulative }; });
@@ -102,8 +128,8 @@ export default function ReportsPage() {
         <h1 className="page-title">Relatórios — {currentYear}</h1>
       </div>
 
-      {/* Resumo anual */}
-      <div className="grid-cols-3" style={{ marginBottom: 20 }}>
+      {/* Resumo anual — sempre 3 lado a lado */}
+      <div className="stat-row" style={{ marginBottom: 20 }}>
         {[
           { label: 'Receitas no Ano',  value: yearSummary.income,  color: CHART_COLORS.income,  icon: TrendingUp },
           { label: 'Despesas no Ano',  value: yearSummary.expense, color: CHART_COLORS.expense, icon: TrendingDown },
@@ -113,17 +139,15 @@ export default function ReportsPage() {
             key={s.label}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="glass-card"
-            style={{ padding: 0, overflow: 'hidden' }}
+            className="glass-card stat-card"
+            style={{ borderTop: `3px solid ${s.color}` }}
           >
-            <div style={{ height: 3, background: s.color }} />
-            <div style={{ padding: '14px 18px' }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 8 }}>
-                {s.label}
-              </div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                {formatCurrency(s.value)}
-              </div>
+            <div className="stat-ico" style={{ background: `${s.color}1f` }}>
+              <s.icon style={{ color: s.color }} />
+            </div>
+            <div className="stat-box">
+              <div className="stat-label">{s.label}</div>
+              <div className="stat-amount" style={{ color: s.color }}>{formatCurrency(s.value)}</div>
             </div>
           </motion.div>
         ))}
@@ -299,6 +323,30 @@ export default function ReportsPage() {
                     activeDot={{ r: 6 }}
                   />
                 </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </>
+        )}
+
+        {/* ── Tab 4: Despesas por Natureza ── */}
+        {tab === 4 && (
+          <>
+            <div style={{ marginBottom: 20 }}>
+              <h3 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>Despesas por Natureza</h3>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Fixas, Variáveis, Extras e Adicionais mês a mês em {currentYear}</p>
+            </div>
+            <div style={{ height: 360 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={natureMonthly} margin={{ left: -10 }}>
+                  <CartesianGrid {...gridStyle} vertical={false} />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={axisStyle} />
+                  <YAxis axisLine={false} tickLine={false} tick={axisStyle} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend formatter={(value) => <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{value}</span>} />
+                  {NATURE_ORDER.map((n) => (
+                    <Bar key={n} dataKey={natureMeta[n].label} stackId="nat" fill={natureMeta[n].color} maxBarSize={36} />
+                  ))}
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </>

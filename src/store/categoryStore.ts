@@ -9,6 +9,8 @@ interface CategoryStore {
   categories: Category[];
   loading: boolean;
   loadCategories: () => Promise<void>;
+  /** Garante (cria se faltar) categorias por tipo+grupo+nome. Idempotente. */
+  ensureCategories: (defs: Omit<Category, 'id'>[]) => Promise<void>;
   addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
   updateCategory: (id: string, data: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
@@ -25,6 +27,17 @@ export const useCategoryStore = create<CategoryStore>()((set, get) => ({
     set({ loading: true });
     const categories = await db.categories.orderBy('order').toArray();
     set({ categories, loading: false });
+  },
+
+  ensureCategories: async (defs) => {
+    const existing = get().categories;
+    const key = (c: { type: string; group: string; name: string }) =>
+      `${c.type}|${c.group}|${c.name.trim().toLowerCase()}`;
+    const have = new Set(existing.map(key));
+    const missing = defs.filter((d) => !have.has(key(d))).map((d) => ({ ...d, id: nanoid() }));
+    if (missing.length === 0) return;
+    await db.categories.bulkAdd(missing);
+    set((state) => ({ categories: [...state.categories, ...missing] }));
   },
 
   addCategory: async (data) => {

@@ -7,9 +7,11 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   maxWidth?: string;
+  /** Se false, clicar fora do modal não o fecha (evita perder dados em formulários). */
+  closeOnOverlayClick?: boolean;
 }
 
-export default function Modal({ isOpen, onClose, title, children, maxWidth = '500px' }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, maxWidth = '500px', closeOnOverlayClick = true }: ModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -18,7 +20,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = '50
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onClick={closeOnOverlayClick ? onClose : undefined}
         >
           <motion.div
             className="modal-content"

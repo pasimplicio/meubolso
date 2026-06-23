@@ -61,6 +61,21 @@ export function getPreviousMonthRange(): { start: Date; end: Date } {
   return { start: startOfMonth(prev), end: endOfMonth(prev) };
 }
 
+/** Primeiro dia útil (seg–sex) do mês informado. `month` é 1–12. */
+export function firstBusinessDay(year: number, month: number): Date {
+  const d = new Date(year, month - 1, 1);
+  while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+  return d;
+}
+
+/** Primeiro dia útil do mês subsequente ao informado (competência → pagamento). */
+export function firstBusinessDayOfNextMonth(year: number, month: number): Date {
+  let m = month + 1;
+  let y = year;
+  if (m > 12) { m = 1; y += 1; }
+  return firstBusinessDay(y, m);
+}
+
 // ===== PERCENTAGE =====
 
 export function formatPercentage(value: number): string {

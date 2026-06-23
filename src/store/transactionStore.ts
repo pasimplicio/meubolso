@@ -21,6 +21,8 @@ interface TransactionStore {
   loading: boolean;
   loadTransactions: () => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>;
+  /** Importa vários lançamentos de uma vez, ignorando externalId já existente. */
+  importMany: (drafts: Omit<Transaction, 'id' | 'createdAt'>[]) => Promise<{ added: number; skipped: number }>;
   updateTransaction: (id: string, data: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   getTransactionsByMonth: (year: number, month: number) => Transaction[];
@@ -82,6 +84,28 @@ export const useTransactionStore = create<TransactionStore>()((set, get) => ({
         set((state) => ({ transactions: [...instances, ...state.transactions] }));
       }
     }
+  },
+
+  importMany: async (drafts) => {
+    const userId = useAuthStore.getState().user?.id;
+    const existing = new Set(get().transactions.map((t) => t.externalId).filter(Boolean) as string[]);
+    const seen = new Set<string>();
+    const fresh = drafts.filter((d) => {
+      if (!d.externalId) return true;
+      if (existing.has(d.externalId) || seen.has(d.externalId)) return false;
+      seen.add(d.externalId);
+      return true;
+    });
+    const txs: Transaction[] = fresh.map((d) => ({ ...d, id: nanoid(), createdAt: new Date(), userId }));
+    if (txs.length > 0) {
+      await db.transactions.bulkAdd(txs);
+      set((state) => {
+        const all = [...txs, ...state.transactions];
+        all.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return { transactions: all };
+      });
+    }
+    return { added: txs.length, skipped: drafts.length - txs.length };
   },
 
   updateTransaction: async (id, data) => {

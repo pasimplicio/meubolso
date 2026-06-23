@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, Trash2, Edit3, ArrowUpRight, ArrowDownRight, ArrowRightLeft, RefreshCw } from 'lucide-react';
+import { Plus, Search, Trash2, Edit3, ArrowUpRight, ArrowDownRight, ArrowRightLeft, RefreshCw, Upload } from 'lucide-react';
 import { useTransactionStore } from '../store/transactionStore';
 import { useAccountStore } from '../store/accountStore';
 import { useCategoryStore } from '../store/categoryStore';
@@ -9,6 +9,7 @@ import { formatCurrency, formatDate } from '../lib/utils';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirm } from '../components/ui/ConfirmDialog';
 import TransactionModal from '../components/transactions/TransactionModal';
+import StatementImportModal from '../components/statements/StatementImportModal';
 
 export default function TransactionsPage() {
   const { currentMonth, currentYear } = useAppStore();
@@ -23,6 +24,7 @@ export default function TransactionsPage() {
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [filterRecurring, setFilterRecurring] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<string | null>(null);
 
   const recurrenceLabel: Record<string, string> = { daily: 'Diária', weekly: 'Semanal', monthly: 'Mensal', yearly: 'Anual' };
@@ -88,40 +90,45 @@ export default function TransactionsPage() {
     <div className="page-container">
       <div className="page-header">
         <h1 className="page-title">Transações</h1>
-        <button className="btn-primary" onClick={() => { setEditingTransaction(null); setModalOpen(true); }}>
-          <Plus size={16} /> Nova Transação
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn-secondary" onClick={() => setImportOpen(true)}>
+            <Upload size={16} /> Importar Extrato
+          </button>
+          <button className="btn-primary" onClick={() => { setEditingTransaction(null); setModalOpen(true); }}>
+            <Plus size={16} /> Nova Transação
+          </button>
+        </div>
       </div>
 
-      {/* Summary */}
-      <div className="grid-cols-3" style={{ marginBottom: 20 }}>
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ background: 'var(--accent-green-soft)', borderRadius: 8, padding: 8 }}>
-            <ArrowUpRight size={18} style={{ color: 'var(--accent-green)' }} />
+      {/* Summary — sempre 3 cards lado a lado */}
+      <div className="stat-row" style={{ marginBottom: 20 }}>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card stat-card">
+          <div className="stat-ico" style={{ background: 'var(--accent-green-soft)' }}>
+            <ArrowUpRight style={{ color: 'var(--accent-green)' }} />
           </div>
-          <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Receitas</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-green)' }}>{formatCurrency(totalIncome)}</div>
-          </div>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ background: 'var(--accent-red-soft)', borderRadius: 8, padding: 8 }}>
-            <ArrowDownRight size={18} style={{ color: 'var(--accent-red)' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Despesas</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-red)' }}>{formatCurrency(totalExpense)}</div>
+          <div className="stat-box">
+            <div className="stat-label">Receitas</div>
+            <div className="stat-amount" style={{ color: 'var(--accent-green)' }}>{formatCurrency(totalIncome)}</div>
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ background: 'var(--accent-blue-soft)', borderRadius: 8, padding: 8 }}>
-            <ArrowRightLeft size={18} style={{ color: 'var(--accent-blue)' }} />
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card stat-card">
+          <div className="stat-ico" style={{ background: 'var(--accent-red-soft)' }}>
+            <ArrowDownRight style={{ color: 'var(--accent-red)' }} />
           </div>
-          <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Saldo</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: totalIncome - totalExpense >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+          <div className="stat-box">
+            <div className="stat-label">Despesas</div>
+            <div className="stat-amount" style={{ color: 'var(--accent-red)' }}>{formatCurrency(totalExpense)}</div>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card stat-card">
+          <div className="stat-ico" style={{ background: 'var(--accent-blue-soft)' }}>
+            <ArrowRightLeft style={{ color: 'var(--accent-blue)' }} />
+          </div>
+          <div className="stat-box">
+            <div className="stat-label">Saldo</div>
+            <div className="stat-amount" style={{ color: totalIncome - totalExpense >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
               {formatCurrency(totalIncome - totalExpense)}
             </div>
           </div>
@@ -292,6 +299,7 @@ export default function TransactionsPage() {
         onClose={() => { setModalOpen(false); setEditingTransaction(null); }}
         editId={editingTransaction}
       />
+      <StatementImportModal isOpen={importOpen} onClose={() => setImportOpen(false)} />
     </div>
   );
 }

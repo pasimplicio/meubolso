@@ -7,6 +7,8 @@ import { useCategoryStore } from './store/categoryStore';
 import { useTransactionStore } from './store/transactionStore';
 import { useBudgetStore } from './store/budgetStore';
 import { useGoalStore } from './store/goalStore';
+import { useInvestmentStore } from './store/investmentStore';
+import { usePaystubStore } from './store/paystubStore';
 import { initializeDefaults } from './db';
 import { ToastProvider } from './contexts/ToastContext';
 import { ConfirmProvider } from './components/ui/ConfirmDialog';
@@ -21,6 +23,8 @@ import CategoriesPage from './pages/CategoriesPage';
 import BudgetPage from './pages/BudgetPage';
 import GoalsPage from './pages/GoalsPage';
 import ReportsPage from './pages/ReportsPage';
+import InvestimentosPage from './pages/InvestimentosPage';
+import ContrachequePage from './pages/ContrachequePage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -39,16 +43,21 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function AppContent() {
   const { theme, sidebarOpen, setSidebarOpen } = useAppStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, initializing, init } = useAuthStore();
   const { loadAccounts } = useAccountStore();
   const { loadCategories } = useCategoryStore();
   const { loadTransactions } = useTransactionStore();
   const { loadBudgets } = useBudgetStore();
   const { loadGoals } = useGoalStore();
+  const { loadInvestments } = useInvestmentStore();
+  const { loadPaystubs } = usePaystubStore();
 
   useEffect(() => {
     document.documentElement.className = theme;
   }, [theme]);
+
+  // Assina o estado de autenticação do Firebase uma única vez.
+  useEffect(() => { init(); }, []);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -60,10 +69,21 @@ function AppContent() {
         loadTransactions(),
         loadBudgets(),
         loadGoals(),
+        loadInvestments(),
+        loadPaystubs(),
       ]);
     }
     init();
   }, [isAuthenticated]);
+
+  // Enquanto o Firebase restaura a sessão, evita piscar a tela de login.
+  if (initializing) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid var(--border-subtle)', borderTopColor: 'var(--accent-blue)', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -92,6 +112,8 @@ function AppContent() {
           <Route path="/budget"       element={<ProtectedRoute><BudgetPage /></ProtectedRoute>} />
           <Route path="/goals"        element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
           <Route path="/reports"      element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+          <Route path="/investimentos" element={<ProtectedRoute><InvestimentosPage /></ProtectedRoute>} />
+          <Route path="/contracheque" element={<ProtectedRoute><ContrachequePage /></ProtectedRoute>} />
           <Route path="/settings"     element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="*"             element={<Navigate to="/" replace />} />
         </Routes>

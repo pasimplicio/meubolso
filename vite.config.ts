@@ -10,4 +10,11 @@ export default defineConfig({
       '@': '/src',
     },
   },
+  server: {
+    // Permite que o popup do login Google (Firebase Auth) feche e se comunique
+    // de volta — evita os avisos "Cross-Origin-Opener-Policy would block window.close".
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    },
+  },
 })

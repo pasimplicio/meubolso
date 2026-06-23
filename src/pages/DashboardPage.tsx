@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight,
+  TrendingUp, TrendingDown,
   Wallet, Calendar, Target, ArrowRightLeft, Clock,
 } from 'lucide-react';
 import {
@@ -12,9 +12,14 @@ import { useTransactionStore } from '../store/transactionStore';
 import { useAccountStore } from '../store/accountStore';
 import { useGoalStore } from '../store/goalStore';
 import { useCategoryStore } from '../store/categoryStore';
+import { useInvestmentStore } from '../store/investmentStore';
+import { useRatesStore } from '../store/ratesStore';
+import { portfolioTotals } from '../lib/investments';
 import { useAppStore } from '../store/appStore';
 import { formatCurrency, formatDateRelative, getMonthName } from '../lib/utils';
+import { natureMeta } from '../db/seedData';
 import ProgressBar from '../components/ui/ProgressBar';
+import type { ExpenseNature } from '../types';
 
 const container = {
   hidden: { opacity: 0 },
@@ -46,39 +51,21 @@ function ChartTooltip({ active, payload, label }: any) {
   );
 }
 
-// Card KPI com barra colorida superior
+// Card KPI no modelo stat-card (sempre em linha, responsivo)
 function KpiCard({ label, value, icon: Icon, color, sub, subUp }: {
   label: string; value: string; icon: any; color: string;
   sub?: string; subUp?: boolean;
 }) {
+  const subColor = subUp === true ? 'var(--accent-green)' : subUp === false ? 'var(--accent-red)' : 'var(--text-muted)';
   return (
-    <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
-      {/* Barra colorida no topo */}
-      <div style={{ height: 4, background: color }} />
-      <div style={{ padding: '16px 18px 18px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
-            {label}
-          </span>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Icon size={16} style={{ color }} />
-          </div>
-        </div>
-        <div style={{ fontSize: '1.55rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1 }}>
-          {value}
-        </div>
-        {sub && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8 }}>
-            {subUp !== undefined && (
-              subUp
-                ? <ArrowUpRight size={13} style={{ color: 'var(--accent-green)' }} />
-                : <ArrowDownRight size={13} style={{ color: 'var(--accent-red)' }} />
-            )}
-            <span style={{ fontSize: '0.72rem', color: subUp ? 'var(--accent-green)' : subUp === false ? 'var(--accent-red)' : 'var(--text-muted)', fontWeight: 600 }}>
-              {sub}
-            </span>
-          </div>
-        )}
+    <div className="glass-card stat-card" style={{ borderTop: `3px solid ${color}` }}>
+      <div className="stat-ico" style={{ background: `${color}18` }}>
+        <Icon style={{ color }} />
+      </div>
+      <div className="stat-box">
+        <div className="stat-label">{label}</div>
+        <div className="stat-amount" style={{ color: 'var(--text-primary)' }}>{value}</div>
+        {sub && <div className="stat-sub" style={{ color: subColor }}>{sub}</div>}
       </div>
     </div>
   );
@@ -90,6 +77,8 @@ export default function DashboardPage() {
   const { getTotalBalance, accounts } = useAccountStore();
   const { goals } = useGoalStore();
   const { categories } = useCategoryStore();
+  const { investments } = useInvestmentStore();
+  const rates = useRatesStore();
 
   const monthTransactions = useMemo(() => transactions.filter((t) => {
     const d = new Date(t.date);
@@ -106,6 +95,10 @@ export default function DashboardPage() {
 
   const balance = totalIncome - totalExpense;
   const totalBalance = getTotalBalance();
+  const investTotals = portfolioTotals(investments, rates);
+  const investCurrent = investTotals.current;
+  const investGain = investTotals.gain;
+  const netWorth = totalBalance + investCurrent;
 
   const prevMonthTransactions = useMemo(() => {
     const pm = currentMonth === 1 ? 12 : currentMonth - 1;
@@ -134,6 +127,18 @@ export default function DashboardPage() {
         return { name: cat?.name || 'Outros', value: amount, color: cat?.color || '#64748b', icon: cat?.icon || '📦' };
       })
       .sort((a, b) => b.value - a.value).slice(0, 6);
+  }, [monthTransactions, categories]);
+
+  const natureSpending = useMemo(() => {
+    const acc: Record<string, number> = {};
+    monthTransactions.filter((t) => t.type === 'expense' && t.status === 'paid').forEach((t) => {
+      const cat = categories.find((c) => c.id === t.categoryId);
+      const nat = (cat?.nature ?? 'variaveis') as ExpenseNature;
+      acc[nat] = (acc[nat] || 0) + t.amount;
+    });
+    const order: ExpenseNature[] = ['fixas', 'variaveis', 'extras', 'adicionais'];
+    const total = Object.values(acc).reduce((s, v) => s + v, 0);
+    return order.map((n) => ({ nature: n, value: acc[n] || 0, pct: total > 0 ? ((acc[n] || 0) / total) * 100 : 0 }));
   }, [monthTransactions, categories]);
 
   const cashFlowData = useMemo(() => {
@@ -173,8 +178,33 @@ export default function DashboardPage() {
   return (
     <motion.div className="page-container" variants={container} initial="hidden" animate="show">
 
+      {/* ── Patrimônio (contas + investimentos) ── */}
+      <motion.div variants={item} className="glass-card" style={{ padding: '18px 22px', marginBottom: 16, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 24, background: 'linear-gradient(120deg, rgba(59,130,246,0.10), rgba(34,197,94,0.06))' }}>
+        <div>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>Patrimônio Líquido</div>
+          <div style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em' }}>{formatCurrency(netWorth)}</div>
+        </div>
+        <div style={{ width: 1, height: 40, background: 'var(--border-subtle)' }} />
+        <div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>💼 Contas</div>
+          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--accent-blue)' }}>{formatCurrency(totalBalance)}</div>
+        </div>
+        <div>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>📈 Investimentos</div>
+          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#22c55e' }}>{formatCurrency(investCurrent)}</div>
+        </div>
+        {investCurrent > 0 && (
+          <div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Rentabilidade</div>
+            <div style={{ fontSize: '1.05rem', fontWeight: 700, color: investGain >= 0 ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+              {investGain >= 0 ? '+' : ''}{formatCurrency(investGain)}
+            </div>
+          </div>
+        )}
+      </motion.div>
+
       {/* ── KPI Cards ── */}
-      <div className="grid-cols-4" style={{ marginBottom: 20 }}>
+      <div className="stat-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 20 }}>
         <motion.div variants={item}>
           <KpiCard
             label="Saldo Total"
@@ -308,6 +338,33 @@ export default function DashboardPage() {
           )}
         </motion.div>
       </div>
+
+      {/* ── Despesas por Natureza ── */}
+      {totalExpense > 0 && (
+        <motion.div variants={item} className="glass-card" style={{ padding: 20, marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>Despesas por Natureza</h3>
+            <span style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>{getMonthName(currentMonth)}</span>
+          </div>
+          {/* Barra empilhada */}
+          <div style={{ display: 'flex', height: 12, borderRadius: 6, overflow: 'hidden', marginBottom: 14, background: 'var(--bg-primary)' }}>
+            {natureSpending.filter((n) => n.value > 0).map((n) => (
+              <div key={n.nature} style={{ width: `${n.pct}%`, background: natureMeta[n.nature].color }} title={natureMeta[n.nature].label} />
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            {natureSpending.map((n) => (
+              <div key={n.nature} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: `${natureMeta[n.nature].color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{natureMeta[n.nature].icon}</div>
+                <div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{natureMeta[n.nature].label}</div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 700 }}>{formatCurrency(n.value)} <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 500 }}>{n.pct.toFixed(0)}%</span></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* ── Bottom Row ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr 1fr', gap: 16 }}>

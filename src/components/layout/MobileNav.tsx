@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, ArrowLeftRight, Wallet, PieChart, Target } from 'lucide-react';
+import { LayoutDashboard, ArrowLeftRight, Wallet, TrendingUp, FileText } from 'lucide-react';
 
 const mobileNavItems = [
   { to: '/', icon: LayoutDashboard, label: 'Home' },
   { to: '/transactions', icon: ArrowLeftRight, label: 'Transações' },
   { to: '/accounts', icon: Wallet, label: 'Contas' },
-  { to: '/budget', icon: PieChart, label: 'Orçamento' },
-  { to: '/goals', icon: Target, label: 'Metas' },
+  { to: '/investimentos', icon: TrendingUp, label: 'Invest.' },
+  { to: '/contracheque', icon: FileText, label: 'Holerite' },
 ];
 
 export default function MobileNav() {

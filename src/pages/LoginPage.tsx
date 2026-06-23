@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Wallet, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
+import GoogleButton from '../components/auth/GoogleButton';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login, loginWithGoogle } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -28,6 +29,19 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogle = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const ok = await loginWithGoogle();
+      if (ok) navigate('/', { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Erro ao entrar com Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-root">
       <motion.div
@@ -37,12 +51,9 @@ export default function LoginPage() {
         transition={{ duration: 0.3 }}
       >
         <div className="auth-logo">
-          <div className="auth-logo-icon">
-            <Wallet size={22} color="white" />
-          </div>
+          <img src="/logo.png" alt="MeuBolso" className="auth-logo-img" />
         </div>
-        <h1 className="auth-title">MeuBolso</h1>
-        <p className="auth-subtitle">Seu dinheiro sob controle</p>
+        <p className="auth-subtitle" style={{ marginTop: 8 }}>Seu dinheiro sob controle</p>
 
         <form onSubmit={handleSubmit}>
           <div className="auth-field">
@@ -99,7 +110,9 @@ export default function LoginPage() {
 
         <div className="auth-divider">ou</div>
 
-        <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+        <GoogleButton onClick={handleGoogle} disabled={loading} label="Entrar com Google" />
+
+        <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 18 }}>
           Não tem conta?{' '}
           <Link to="/register" className="auth-link">Criar gratuitamente</Link>
         </div>

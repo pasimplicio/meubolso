@@ -1,34 +1,27 @@
-import { Menu, Moon, Sun, ChevronLeft, ChevronRight, Wallet } from 'lucide-react';
+import { Menu, Moon, Sun, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
+import { useAuthStore } from '../../store/authStore';
 import { getMonthName } from '../../lib/utils';
 
 export default function Header() {
-  const { theme, toggleTheme, toggleSidebar, currentMonth, currentYear, nextMonth, prevMonth } =
+  const { theme, toggleTheme, toggleSidebar, sidebarOpen, currentMonth, currentYear, nextMonth, prevMonth } =
     useAppStore();
+  const { user } = useAuthStore();
+  const firstName = user?.name?.split(' ')[0] ?? 'Usuário';
 
   return (
-    <header className="header safe-area-top" style={{ gap: 0 }}>
-      {/* Brand */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+    <header className={`header safe-area-top ${!sidebarOpen ? 'header-full' : ''}`} style={{ gap: 0 }}>
+      {/* Saudação */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
         <button className="btn-icon" onClick={toggleSidebar} aria-label="Menu">
           <Menu size={18} />
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: 8,
-            background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            <Wallet size={15} color="white" />
-          </div>
-          <span style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.02em' }} className="gradient-text">
-            MeuBolso
-          </span>
-        </div>
+        <span style={{ fontSize: '0.95rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          Bem-vindo, <span className="gradient-text">{firstName}</span> 👋
+        </span>
       </div>
 
-      {/* Month Selector — pill estilo fintech */}
+      {/* Seletor de mês — pill estilo fintech */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 2,
         background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)',
@@ -73,7 +66,7 @@ export default function Header() {
       </div>
 
       {/* Ações */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 10 }}>
         <button
           className="btn-icon"
           onClick={toggleTheme}
