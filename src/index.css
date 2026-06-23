@@ -822,8 +822,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-primary);
   padding: 20px;
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(55% 45% at 80% 8%, rgba(22,163,74,0.16), transparent 70%),
+    radial-gradient(50% 45% at 14% 20%, rgba(34,197,94,0.13), transparent 70%),
+    radial-gradient(55% 50% at 86% 86%, rgba(14,165,233,0.10), transparent 70%),
+    var(--bg-gradient);
+  background-attachment: fixed;
+}
+.dark .auth-root {
+  background-image:
+    radial-gradient(55% 45% at 80% 8%, rgba(34,197,94,0.16), transparent 70%),
+    radial-gradient(50% 45% at 14% 20%, rgba(59,130,246,0.14), transparent 70%),
+    radial-gradient(55% 50% at 86% 86%, rgba(99,102,241,0.12), transparent 70%),
+    var(--bg-gradient);
 }
 
 .auth-card {
