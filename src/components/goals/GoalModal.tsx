@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import Modal from '../ui/Modal';
 import { useGoalStore } from '../../store/goalStore';
 import { useToast } from '../../contexts/ToastContext';
+import { parseDateInput } from '../../lib/utils';
 import type { GoalType } from '../../types';
 
 interface FormData {
@@ -30,7 +31,7 @@ export default function GoalModal({ isOpen, onClose }: Props) {
   const onSubmit = async (data: FormData) => {
     const targetAmount = parseFloat(data.targetAmount.replace(',', '.'));
     if (isNaN(targetAmount) || targetAmount <= 0) { toast.error('Valor inválido'); return; }
-    await addGoal({ name: data.name, targetAmount, deadline: new Date(data.deadline), type: data.type, icon: data.icon, color: data.color });
+    await addGoal({ name: data.name, targetAmount, deadline: parseDateInput(data.deadline), type: data.type, icon: data.icon, color: data.color });
     toast.success('Meta criada!');
     reset();
     onClose();

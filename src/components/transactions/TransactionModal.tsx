@@ -5,6 +5,7 @@ import { useTransactionStore } from '../../store/transactionStore';
 import { useAccountStore } from '../../store/accountStore';
 import { useCategoryStore } from '../../store/categoryStore';
 import { useToast } from '../../contexts/ToastContext';
+import { parseDateInput, toDateInputValue } from '../../lib/utils';
 import { paymentMethods, paymentMethodMeta, natureMeta } from '../../db/seedData';
 import type { TransactionType, TransactionStatus, Recurrence, PaymentMethod, Category } from '../../types';
 
@@ -78,12 +79,12 @@ export default function TransactionModal({ isOpen, onClose, editId }: Props) {
         setValue('categoryId', t.categoryId);
         setValue('accountId', t.accountId);
         setValue('toAccountId', t.toAccountId || '');
-        setValue('date', new Date(t.date).toISOString().split('T')[0]);
+        setValue('date', toDateInputValue(t.date));
         setValue('status', t.status);
         setValue('paymentMethod', t.paymentMethod || '');
         setValue('reconciled', t.reconciled ?? false);
         setValue('recurrence', t.recurrence || '');
-        setValue('recurrenceEndDate', t.recurrenceEndDate ? new Date(t.recurrenceEndDate).toISOString().split('T')[0] : '');
+        setValue('recurrenceEndDate', t.recurrenceEndDate ? toDateInputValue(t.recurrenceEndDate) : '');
         setValue('notes', t.notes || '');
         setTags(t.tags ?? []);
       }
@@ -133,12 +134,12 @@ export default function TransactionModal({ isOpen, onClose, editId }: Props) {
       categoryId: data.categoryId,
       accountId: data.accountId,
       toAccountId: data.type === 'transfer' ? data.toAccountId : undefined,
-      date: new Date(data.date),
+      date: parseDateInput(data.date),
       status: data.status,
       paymentMethod: data.paymentMethod ? (data.paymentMethod as PaymentMethod) : undefined,
       reconciled: data.reconciled ?? false,
       recurrence: data.recurrence ? (data.recurrence as Recurrence) : undefined,
-      recurrenceEndDate: data.recurrence && data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : undefined,
+      recurrenceEndDate: data.recurrence && data.recurrenceEndDate ? parseDateInput(data.recurrenceEndDate) : undefined,
       tags: tags.length > 0 ? tags : undefined,
       notes: data.notes || undefined,
     };

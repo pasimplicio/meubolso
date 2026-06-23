@@ -61,6 +61,21 @@ export function getPreviousMonthRange(): { start: Date; end: Date } {
   return { start: startOfMonth(prev), end: endOfMonth(prev) };
 }
 
+/** Converte "YYYY-MM-DD" (input type=date) em Date LOCAL — evita o shift de fuso. */
+export function parseDateInput(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+/** Formata uma Date para "YYYY-MM-DD" no fuso local (para popular input type=date). */
+export function toDateInputValue(date: Date | string): string {
+  const d = new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 /** Primeiro dia útil (seg–sex) do mês informado. `month` é 1–12. */
 export function firstBusinessDay(year: number, month: number): Date {
   const d = new Date(year, month - 1, 1);

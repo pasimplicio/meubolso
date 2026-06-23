@@ -6,7 +6,7 @@ import { useAccountStore } from '../../store/accountStore';
 import { useCategoryStore } from '../../store/categoryStore';
 import { useToast } from '../../contexts/ToastContext';
 import { parsePaystubPdf } from '../../lib/paystubParser';
-import { formatCurrency, firstBusinessDayOfNextMonth } from '../../lib/utils';
+import { formatCurrency, firstBusinessDayOfNextMonth, parseDateInput, toDateInputValue } from '../../lib/utils';
 import { payrollDeductionDefs, guessDeductionCategoryName, natureMeta } from '../../db/seedData';
 import type { PaystubItem, Category } from '../../types';
 
@@ -25,7 +25,7 @@ interface Draft {
   fgts?: number;
 }
 
-const toInput = (d: Date) => d.toISOString().split('T')[0];
+const toInput = (d: Date) => toDateInputValue(d);
 
 const emptyDraft = (): Draft => {
   const now = new Date();
@@ -153,7 +153,7 @@ export default function PaystubImportModal({ isOpen, onClose }: Props) {
           month: draft.month,
           year: draft.year,
           sequence: draft.sequence,
-          date: new Date(draft.date),
+          date: parseDateInput(draft.date),
           grossTotal: gross,
           deductionsTotal: deductions,
           netTotal: net,

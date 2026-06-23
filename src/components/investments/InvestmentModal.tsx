@@ -6,6 +6,7 @@ import { useRatesStore } from '../../store/ratesStore';
 import { useToast } from '../../contexts/ToastContext';
 import { investmentClasses, investmentClassMeta } from '../../db/seedData';
 import { effectiveAnnualRate } from '../../lib/investments';
+import { parseDateInput, toDateInputValue } from '../../lib/utils';
 import type { InvestmentClass, RateType } from '../../types';
 
 interface Props {
@@ -46,7 +47,7 @@ export default function InvestmentModal({ isOpen, onClose, editId }: Props) {
   const [rateType, setRateType] = useState<RateType>('cdi');
   const [rate, setRate] = useState('100');
   const [accountId, setAccountId] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(toDateInputValue(new Date()));
 
   useEffect(() => {
     if (!isOpen) return;
@@ -55,11 +56,11 @@ export default function InvestmentModal({ isOpen, onClose, editId }: Props) {
       setName(inv.name); setInstitution(inv.institution ?? ''); setKlass(inv.class);
       setInvested(String(inv.investedAmount)); setCurrent(String(inv.currentValue));
       setRateType(inv.rateType ?? 'manual'); setRate(inv.rate != null ? String(inv.rate) : '100');
-      setAccountId(inv.accountId ?? ''); setDate(new Date(inv.date).toISOString().split('T')[0]);
+      setAccountId(inv.accountId ?? ''); setDate(toDateInputValue(inv.date));
     } else {
       setName(''); setInstitution(''); setKlass('renda_fixa');
       setInvested(''); setCurrent(''); setRateType('cdi'); setRate('100');
-      setAccountId(''); setDate(new Date().toISOString().split('T')[0]);
+      setAccountId(''); setDate(toDateInputValue(new Date()));
     }
   }, [editId, isOpen]);
 
@@ -87,7 +88,7 @@ export default function InvestmentModal({ isOpen, onClose, editId }: Props) {
       rateType,
       rate: isManual ? undefined : (isNaN(rateNum) ? 0 : rateNum),
       accountId: accountId || undefined,
-      date: new Date(date),
+      date: parseDateInput(date),
     };
 
     if (editId) { await updateInvestment(editId, payload); toast.success('Investimento atualizado'); }
