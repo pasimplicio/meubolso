@@ -28,6 +28,8 @@ import ContrachequePage from './pages/ContrachequePage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import LandingPage from './pages/LandingPage';
+import PrivacyPage from './pages/PrivacyPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -88,9 +90,11 @@ function AppContent() {
   if (!isAuthenticated) {
     return (
       <Routes>
-        <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-        <Route path="*"         element={<Navigate to="/login" replace />} />
+        <Route path="/"           element={<LandingPage />} />
+        <Route path="/privacidade" element={<PrivacyPage />} />
+        <Route path="/login"      element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/register"   element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        <Route path="*"           element={<Navigate to="/" replace />} />
       </Routes>
     );
   }
