@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Download, Upload, Trash2, Moon, Sun, Info } from 'lucide-react';
 import { useAppStore } from '../store/appStore';
-import { db } from '../db';
+import { db, initializeDefaults, resetInitState } from '../db';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirm } from '../components/ui/ConfirmDialog';
 import { useAccountStore } from '../store/accountStore';
@@ -91,8 +91,11 @@ export default function SettingsPage() {
       await db.budgets.clear();
       await db.goals.clear();
       await db.goalContributions.clear();
+      // Recria a taxonomia de categorias padrão (não some pra sempre).
+      resetInitState();
+      await initializeDefaults();
       await Promise.all([loadAccounts(), loadTransactions(), loadCategories(), loadBudgets(), loadGoals()]);
-      toast.success('Todos os dados foram apagados');
+      toast.success('Dados apagados — categorias padrão restauradas');
     }
   };
 
