@@ -13,7 +13,7 @@ import StatementImportModal from '../components/statements/StatementImportModal'
 
 export default function TransactionsPage() {
   const { currentMonth, currentYear } = useAppStore();
-  const { transactions, deleteTransaction } = useTransactionStore();
+  const { transactions, deleteTransaction, deleteSeries } = useTransactionStore();
   const { accounts } = useAccountStore();
   const { categories } = useCategoryStore();
   const toast = useToast();
@@ -63,16 +63,34 @@ export default function TransactionsPage() {
   }, [baseFiltered, filterTag]);
 
   const handleDelete = async (id: string) => {
+    const tx = transactions.find((t) => t.id === id);
+    // Detecta série recorrente (mesmo grupo, ou legado com mesma assinatura + recorrência).
+    const sig = (t: typeof tx) => !!tx && !!t &&
+      t.description === tx.description && t.amount === tx.amount &&
+      t.accountId === tx.accountId && t.categoryId === tx.categoryId && t.type === tx.type;
+    const seriesIds = tx
+      ? transactions.filter((t) => (tx.recurrenceGroupId ? t.recurrenceGroupId === tx.recurrenceGroupId : sig(t))).map((t) => t.id)
+      : [id];
+    const isSeries = seriesIds.length > 1 &&
+      (!!tx?.recurrenceGroupId || transactions.some((t) => seriesIds.includes(t.id) && !!t.recurrence));
+
     const ok = await confirm({
-      title: 'Excluir transação?',
-      message: 'Esta ação não pode ser desfeita.',
-      confirmLabel: 'Excluir',
+      title: isSeries ? 'Excluir série recorrente?' : 'Excluir transação?',
+      message: isSeries
+        ? `Isso vai excluir os ${seriesIds.length} lançamentos desta recorrência (inclusive os futuros).`
+        : 'Esta ação não pode ser desfeita.',
+      confirmLabel: isSeries ? 'Excluir série' : 'Excluir',
       variant: 'danger',
     });
     if (!ok) return;
     try {
-      await deleteTransaction(id);
-      toast.success('Transação excluída');
+      if (isSeries) {
+        const n = await deleteSeries(id);
+        toast.success(`${n} lançamentos excluídos`);
+      } else {
+        await deleteTransaction(id);
+        toast.success('Transação excluída');
+      }
     } catch (err: any) {
       toast.error(err.message);
     }

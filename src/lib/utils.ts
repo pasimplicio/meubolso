@@ -32,7 +32,9 @@ export function formatDateRelative(date: Date | string): string {
 
   if (diff === 0) return 'Hoje';
   if (diff === 1) return 'Ontem';
-  if (diff < 7) return `${diff} dias atrás`;
+  if (diff === -1) return 'Amanhã';
+  if (diff > 0 && diff < 7) return `${diff} dias atrás`;
+  if (diff < 0 && diff > -7) return `em ${-diff} dias`;
   return format(d, "dd 'de' MMM", { locale: ptBR });
 }
 

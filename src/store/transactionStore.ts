@@ -25,6 +25,7 @@ interface TransactionStore {
   importMany: (drafts: Omit<Transaction, 'id' | 'createdAt'>[]) => Promise<{ added: number; skipped: number }>;
   updateTransaction: (id: string, data: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  deleteSeries: (id: string) => Promise<number>;
   getTransactionsByMonth: (year: number, month: number) => Transaction[];
   getTransactionsByAccount: (accountId: string) => Transaction[];
   getTransactionsByCategory: (categoryId: string) => Transaction[];
@@ -49,9 +50,11 @@ export const useTransactionStore = create<TransactionStore>()((set, get) => ({
 
   addTransaction: async (data) => {
     const userId = useAuthStore.getState().user?.id;
+    const groupId = data.recurrence && data.recurrenceEndDate ? nanoid() : undefined;
     const transaction: Transaction = {
       ...data,
       id: nanoid(),
+      recurrenceGroupId: groupId,
       createdAt: new Date(),
       userId,
     };
@@ -72,6 +75,7 @@ export const useTransactionStore = create<TransactionStore>()((set, get) => ({
           status: 'pending',
           recurrence: undefined,
           recurrenceEndDate: undefined,
+          recurrenceGroupId: groupId,
           createdAt: new Date(),
           userId,
         });
@@ -128,6 +132,21 @@ export const useTransactionStore = create<TransactionStore>()((set, get) => ({
     set((state) => ({
       transactions: state.transactions.filter((t) => t.id !== id),
     }));
+  },
+
+  /** Exclui todos os lançamentos da mesma série recorrente. */
+  deleteSeries: async (id) => {
+    const tx = get().transactions.find((t) => t.id === id);
+    if (!tx) return 0;
+    const sig = (t: Transaction) =>
+      t.description === tx.description && t.amount === tx.amount &&
+      t.accountId === tx.accountId && t.categoryId === tx.categoryId && t.type === tx.type;
+    const ids = get().transactions
+      .filter((t) => (tx.recurrenceGroupId ? t.recurrenceGroupId === tx.recurrenceGroupId : sig(t)))
+      .map((t) => t.id);
+    await db.transactions.bulkDelete(ids);
+    set((state) => ({ transactions: state.transactions.filter((t) => !ids.includes(t.id)) }));
+    return ids.length;
   },
 
   getTransactionsByMonth: (year, month) => {

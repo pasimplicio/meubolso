@@ -160,9 +160,13 @@ export default function DashboardPage() {
     return data;
   }, [transactions, currentMonth, currentYear]);
 
-  const recentTransactions = useMemo(() =>
-    [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6),
-    [transactions]);
+  const recentTransactions = useMemo(() => {
+    const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
+    return [...transactions]
+      .filter((t) => new Date(t.date).getTime() <= endOfToday.getTime()) // só passadas/hoje (ignora recorrentes futuras)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 6);
+  }, [transactions]);
 
   const pendingBills = useMemo(() =>
     monthTransactions.filter((t) => t.type === 'expense' && t.status === 'pending')

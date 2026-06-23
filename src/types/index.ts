@@ -105,6 +105,8 @@ export interface Transaction {
   reconciled?: boolean;
   recurrence?: Recurrence;
   recurrenceEndDate?: Date;
+  /** Agrupa os lançamentos de uma mesma série recorrente (para excluir juntos). */
+  recurrenceGroupId?: string;
   tags?: string[];
   notes?: string;
   /** Vínculo opcional com um contracheque ou investimento de origem. */
