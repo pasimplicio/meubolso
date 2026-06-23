@@ -88,12 +88,18 @@ export const useTransactionStore = create<TransactionStore>()((set, get) => ({
 
   importMany: async (drafts) => {
     const userId = useAuthStore.getState().user?.id;
-    const existing = new Set(get().transactions.map((t) => t.externalId).filter(Boolean) as string[]);
+    // Chave de duplicidade = ID da operação + tipo + valor. O Mercado Pago reusa
+    // o mesmo ID em pares (ex.: Pix −200 e Reembolso +200); por isso o ID sozinho
+    // não basta. Reimportar o mesmo extrato continua deduplicando corretamente.
+    const keyOf = (t: { externalId?: string; type: string; amount: number }) =>
+      t.externalId ? `${t.externalId}|${t.type}|${t.amount}` : null;
+    const existing = new Set(get().transactions.map(keyOf).filter(Boolean) as string[]);
     const seen = new Set<string>();
     const fresh = drafts.filter((d) => {
-      if (!d.externalId) return true;
-      if (existing.has(d.externalId) || seen.has(d.externalId)) return false;
-      seen.add(d.externalId);
+      const k = keyOf(d);
+      if (!k) return true;
+      if (existing.has(k) || seen.has(k)) return false;
+      seen.add(k);
       return true;
     });
     const txs: Transaction[] = fresh.map((d) => ({ ...d, id: nanoid(), createdAt: new Date(), userId }));
