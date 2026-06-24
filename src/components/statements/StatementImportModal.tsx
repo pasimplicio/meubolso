@@ -6,6 +6,7 @@ import { useAccountStore } from '../../store/accountStore';
 import { useCategoryStore } from '../../store/categoryStore';
 import { useToast } from '../../contexts/ToastContext';
 import { parseStatementPdf, type ParsedStatement } from '../../lib/statementParser';
+import { parseOfxStatement } from '../../lib/ofxParser';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { statementFallbackDefs, guessStatementCategoryName } from '../../db/seedData';
 import type { PaymentMethod } from '../../types';
@@ -54,15 +55,18 @@ export default function StatementImportModal({ isOpen, onClose }: Props) {
     (isIncome ? incomeCats : expenseCats).find((c) => c.name === name)?.id ?? '';
 
   const handleFile = async (file: File) => {
-    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
-      toast.error('Selecione um PDF de extrato.'); return;
+    const name = file.name.toLowerCase();
+    const isOfx = name.endsWith('.ofx') || name.endsWith('.qfx');
+    const isPdf = name.endsWith('.pdf') || file.type === 'application/pdf';
+    if (!isOfx && !isPdf) {
+      toast.error('Selecione um arquivo PDF ou OFX de extrato.'); return;
     }
     setParsing(true);
     try {
       await ensureCategories(statementFallbackDefs);
       const buf = await file.arrayBuffer();
-      const res = await parseStatementPdf(buf);
-      if (res.entries.length === 0) { toast.error('Nenhum lançamento encontrado no PDF.'); setParsing(false); return; }
+      const res = isOfx ? parseOfxStatement(buf) : await parseStatementPdf(buf);
+      if (res.entries.length === 0) { toast.error('Nenhum lançamento encontrado no arquivo.'); setParsing(false); return; }
       setParsed(res);
       setRows(res.entries.map((e) => {
         const isIncome = e.amount >= 0;
@@ -143,9 +147,11 @@ export default function StatementImportModal({ isOpen, onClose }: Props) {
             {parsing
               ? <Loader2 size={36} style={{ color: 'var(--accent-blue)', animation: 'spin 1s linear infinite' }} />
               : <UploadCloud size={36} style={{ color: 'var(--accent-blue)' }} />}
-            <div style={{ fontWeight: 600 }}>{parsing ? 'Lendo o extrato…' : 'Selecione o PDF do extrato'}</div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Mercado Pago e extratos com colunas Data · Descrição · Valor · Saldo</div>
-            <input type="file" accept="application/pdf" style={{ display: 'none' }} disabled={parsing}
+            <div style={{ fontWeight: 600 }}>{parsing ? 'Lendo o extrato…' : 'Selecione o extrato (PDF ou OFX)'}</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              <strong>OFX recomendado</strong> (mais completo e preciso) · Mercado Pago e outros bancos
+            </div>
+            <input type="file" accept=".ofx,.qfx,application/pdf" style={{ display: 'none' }} disabled={parsing}
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
           </label>
         </div>
