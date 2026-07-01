@@ -9,7 +9,6 @@ import {
   PieChart,
   BarChart3,
   TrendingUp,
-  FileText,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -29,7 +28,6 @@ const sections = [
       { to: '/transactions', icon: ArrowLeftRight, label: 'Transações',  color: '#8b5cf6' },
       { to: '/accounts',     icon: CreditCard,     label: 'Contas',       color: '#10b981' },
       { to: '/categories',   icon: Tag,            label: 'Categorias',   color: '#f59e0b' },
-      { to: '/contracheque', icon: FileText,       label: 'Contracheque', color: '#0ea5e9' },
       { to: '/investimentos', icon: TrendingUp,    label: 'Investimentos', color: '#22c55e' },
     ],
   },

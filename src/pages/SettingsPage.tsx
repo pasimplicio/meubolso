@@ -9,6 +9,8 @@ import { useTransactionStore } from '../store/transactionStore';
 import { useCategoryStore } from '../store/categoryStore';
 import { useBudgetStore } from '../store/budgetStore';
 import { useGoalStore } from '../store/goalStore';
+import { useInvestmentStore } from '../store/investmentStore';
+import { usePaystubStore } from '../store/paystubStore';
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useAppStore();
@@ -19,6 +21,18 @@ export default function SettingsPage() {
   const { loadCategories } = useCategoryStore();
   const { loadBudgets } = useBudgetStore();
   const { loadGoals } = useGoalStore();
+  const { loadInvestments } = useInvestmentStore();
+  const { loadPaystubs } = usePaystubStore();
+
+  const reloadAllData = () => Promise.all([
+    loadAccounts(),
+    loadTransactions(),
+    loadCategories(),
+    loadBudgets(),
+    loadGoals(),
+    loadInvestments(),
+    loadPaystubs(),
+  ]);
 
   const handleExport = async () => {
     const data = {
@@ -28,8 +42,11 @@ export default function SettingsPage() {
       budgets: await db.budgets.toArray(),
       goals: await db.goals.toArray(),
       goalContributions: await db.goalContributions.toArray(),
+      investments: await db.investments.toArray(),
+      investmentMoves: await db.investmentMoves.toArray(),
+      paystubs: await db.paystubs.toArray(),
       exportedAt: new Date().toISOString(),
-      version: '1.0',
+      version: '1.1',
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -59,6 +76,9 @@ export default function SettingsPage() {
         await db.budgets.clear();
         await db.goals.clear();
         await db.goalContributions.clear();
+        await db.investmentMoves.clear();
+        await db.investments.clear();
+        await db.paystubs.clear();
 
         if (data.accounts?.length) await db.accounts.bulkAdd(data.accounts);
         if (data.categories?.length) await db.categories.bulkAdd(data.categories);
@@ -66,8 +86,11 @@ export default function SettingsPage() {
         if (data.budgets?.length) await db.budgets.bulkAdd(data.budgets);
         if (data.goals?.length) await db.goals.bulkAdd(data.goals);
         if (data.goalContributions?.length) await db.goalContributions.bulkAdd(data.goalContributions);
+        if (data.investments?.length) await db.investments.bulkAdd(data.investments);
+        if (data.investmentMoves?.length) await db.investmentMoves.bulkAdd(data.investmentMoves);
+        if (data.paystubs?.length) await db.paystubs.bulkAdd(data.paystubs);
 
-        await Promise.all([loadAccounts(), loadTransactions(), loadCategories(), loadBudgets(), loadGoals()]);
+        await reloadAllData();
         toast.success('Backup importado com sucesso!');
       } catch {
         toast.error('Erro ao importar backup');
@@ -79,7 +102,7 @@ export default function SettingsPage() {
   const handleClear = async () => {
     const ok = await confirm({
       title: 'Apagar todos os dados?',
-      message: 'Todas as contas, transações, orçamentos e metas serão removidos permanentemente. Esta ação não pode ser desfeita.',
+      message: 'Todas as contas, transações, orçamentos, metas, investimentos e contracheques serão removidos permanentemente. Esta ação não pode ser desfeita.',
       confirmLabel: 'Apagar tudo',
       cancelLabel: 'Cancelar',
       variant: 'danger',
@@ -91,10 +114,13 @@ export default function SettingsPage() {
       await db.budgets.clear();
       await db.goals.clear();
       await db.goalContributions.clear();
+      await db.investmentMoves.clear();
+      await db.investments.clear();
+      await db.paystubs.clear();
       // Recria a taxonomia de categorias padrão (não some pra sempre).
       resetInitState();
       await initializeDefaults();
-      await Promise.all([loadAccounts(), loadTransactions(), loadCategories(), loadBudgets(), loadGoals()]);
+      await reloadAllData();
       toast.success('Dados apagados — categorias padrão restauradas');
     }
   };
@@ -142,7 +168,7 @@ export default function SettingsPage() {
             <span style={{ fontSize: '0.875rem' }}>MeuBolso v1.0.0</span>
           </div>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            Aplicativo de controle financeiro pessoal. Seus dados ficam armazenados localmente no seu dispositivo — nenhum dado é enviado para servidores externos.
+            Aplicativo de controle financeiro pessoal. Seus dados são sincronizados com segurança pelo Firebase e mantidos em cache no dispositivo para acesso offline.
           </p>
         </motion.div>
       </div>
